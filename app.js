@@ -12,6 +12,9 @@ import { APP_CONFIG } from './js/config.js';
 
 // DOM Elements
 const organizeForm = document.getElementById('organizeForm');
+const inputCardSection = document.getElementById('inputCardSection');
+const btnToggleExamples = document.getElementById('btnToggleExamples');
+const exampleChipsContainer = document.getElementById('exampleChipsContainer');
 const inputText = document.getElementById('inputText');
 const btnSubmitText = document.getElementById('btnSubmitText');
 const loadingIndicator = document.getElementById('loadingIndicator');
@@ -173,11 +176,40 @@ inputText.addEventListener('keydown', (e) => {
   }
 });
 
+// Conmutador de visualización de ejemplos rápidos (especialmente en móvil)
+if (btnToggleExamples && exampleChipsContainer) {
+  btnToggleExamples.addEventListener('click', () => {
+    const isShown = exampleChipsContainer.classList.toggle('show-mobile');
+    btnToggleExamples.setAttribute('aria-expanded', isShown ? 'true' : 'false');
+    btnToggleExamples.textContent = isShown ? '✕ Ocultar' : '💡 Ver ejemplos';
+  });
+}
+
+// Expansión fluida del área de texto al enfocar en dispositivos móviles
+if (inputText && inputCardSection) {
+  inputText.addEventListener('focus', () => {
+    inputCardSection.classList.add('expanded');
+  });
+  inputText.addEventListener('blur', () => {
+    if (!inputText.value.trim()) {
+      inputCardSection.classList.remove('expanded');
+    }
+  });
+}
+
 // Chips de ejemplo rápido
 document.querySelectorAll('.chip-btn').forEach(chip => {
   chip.addEventListener('click', () => {
     inputText.value = chip.dataset.text;
+    inputCardSection?.classList.add('expanded');
     inputText.focus();
+    if (exampleChipsContainer && window.innerWidth <= 640) {
+      exampleChipsContainer.classList.remove('show-mobile');
+      if (btnToggleExamples) {
+        btnToggleExamples.setAttribute('aria-expanded', 'false');
+        btnToggleExamples.textContent = '💡 Ver ejemplos';
+      }
+    }
   });
 });
 
@@ -198,6 +230,7 @@ organizeForm.addEventListener('submit', async (e) => {
     storage.addBatchFromAI(aiResult, text);
 
     inputText.value = '';
+    inputCardSection?.classList.remove('expanded');
     alert('✨ ¡Organizado con éxito! Revisa tu calendario y lista de tareas.');
 
     if (aiResult.calendar_events && aiResult.calendar_events.length > 0) {
@@ -252,7 +285,7 @@ function renderTasks() {
   taskListElement.innerHTML = '';
   filtered.forEach(task => {
     const li = document.createElement('li');
-    li.className = `task-card ${task.completed ? 'completed' : ''}`;
+    li.className = `task-card ${task.completed ? 'completed' : ''} priority-${task.priority || 'media'}`;
     li.innerHTML = `
       <input type="checkbox" class="task-chk" ${task.completed ? 'checked' : ''} data-id="${task.id}" aria-label="Marcar como completada">
       <div class="task-body">
@@ -353,9 +386,10 @@ function moveTaskToStatus(taskId, targetStatus) {
 
 function renderKanbanCard(task, currentStatus) {
   const card = document.createElement('div');
-  card.className = 'kanban-card';
+  card.className = `kanban-card status-${currentStatus}`;
   card.draggable = true;
   card.dataset.id = task.id;
+  card.dataset.status = currentStatus;
 
   // Botones de movimiento rápido según la columna actual
   let shiftActions = '';

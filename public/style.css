@@ -1,16 +1,18 @@
 :root, [data-theme="light"] {
   color-scheme: light;
 
-  /* Design Tokens: Calm, Productivity & Soft Blue (design-tokens.json) */
+  /* Design Tokens: Calm, Productivity & Soft Blue con alto contraste WCAG */
   --bg-dark: #f0f9ff;
   --card-bg: #ffffff;
+  --card-nested-bg: #f8fafc;
   --card-hover: #e0f2fe;
   --input-bg: #ffffff;
-  --input-border: #bae6fd;
+  --input-border: #7dd3fc;
   --text-main: #0c4a6e;
   --text-muted: #0369a1;
-  --border: #bae6fd;
-  --border-subtle: #e0f2fe;
+  --border: #7dd3fc;               /* Borde nítido de alto contraste (3:1 WCAG) */
+  --border-subtle: #bae6fd;
+  --border-strong: #0284c7;
 
   --primary: #0284c7;
   --primary-hover: #0369a1;
@@ -19,15 +21,15 @@
   --primary-text: #ffffff;
 
   --danger: #ef4444;
-  --danger-light: rgba(239, 68, 68, 0.12);
+  --danger-light: rgba(239, 68, 68, 0.15);
   --success: #10b981;
-  --success-light: rgba(16, 185, 129, 0.12);
+  --success-light: rgba(16, 185, 129, 0.15);
   --warning: #d97706;
-  --warning-light: rgba(245, 158, 11, 0.12);
+  --warning-light: rgba(245, 158, 11, 0.15);
   --info: #0284c7;
 
-  --shadow-soft: 0px 4px 16px rgba(56, 189, 248, 0.10);
-  --shadow-card-hover: 0px 6px 20px rgba(56, 189, 248, 0.16);
+  --shadow-soft: 0px 4px 16px rgba(2, 132, 199, 0.10);
+  --shadow-card-hover: 0px 8px 24px rgba(2, 132, 199, 0.18);
 
   --radius-lg: 16px;
   --radius-md: 12px;
@@ -38,16 +40,18 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* Versión Oscura con detalles en Celeste */
-  --bg-dark: #08101c;
-  --card-bg: #0f1e33;
-  --card-hover: #162c49;
-  --input-bg: #0a1524;
-  --input-border: #1e3a5f;
+  /* Versión Oscura con detalles en Celeste y límites marcados */
+  --bg-dark: #070f1a;
+  --card-bg: #0d1b2e;
+  --card-nested-bg: #13243c;
+  --card-hover: #172c47;
+  --input-bg: #091424;
+  --input-border: #254b77;
   --text-main: #f0f9ff;
   --text-muted: #7dd3fc;
-  --border: #1e3a5f;
-  --border-subtle: #13263d;
+  --border: #254b77;               /* Borde nítido para separar tarjetas oscuras */
+  --border-subtle: #193454;
+  --border-strong: #38bdf8;
 
   --primary: #38bdf8;
   --primary-hover: #7dd3fc;
@@ -63,8 +67,8 @@
   --warning-light: rgba(245, 158, 11, 0.2);
   --info: #38bdf8;
 
-  --shadow-soft: 0px 4px 20px rgba(0, 0, 0, 0.45);
-  --shadow-card-hover: 0px 6px 24px rgba(56, 189, 248, 0.16);
+  --shadow-soft: 0px 4px 20px rgba(0, 0, 0, 0.55);
+  --shadow-card-hover: 0px 8px 28px rgba(56, 189, 248, 0.20);
 }
 
 * {
@@ -179,26 +183,53 @@ h1 {
 /* Input Card */
 .input-card {
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow-soft);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.input-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .input-label {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
+  color: var(--text-main);
+}
+
+.btn-examples-toggle {
+  background: var(--card-hover);
+  border: 1px solid var(--border);
   color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-examples-toggle:hover,
+.btn-examples-toggle[aria-expanded="true"] {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .smart-textarea {
   width: 100%;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-main);
   padding: 12px;
@@ -207,12 +238,12 @@ h1 {
   resize: vertical;
   min-height: 85px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, min-height 0.2s, height 0.2s;
 }
 
 .smart-textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-light);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .input-action-row {
@@ -301,24 +332,26 @@ h1 {
 }
 
 .chips-label {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 .chip-btn {
-  background: var(--card-hover);
+  background: var(--card-nested-bg);
   border: 1px solid var(--border);
-  color: var(--text-muted);
+  color: var(--text-main);
   border-radius: 14px;
-  padding: 4px 10px;
-  font-size: 0.73rem;
+  padding: 5px 11px;
+  font-size: 0.74rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .chip-btn:hover {
   background: var(--primary-light);
-  color: var(--text-main);
+  color: var(--primary);
   border-color: var(--primary);
 }
 
@@ -331,7 +364,7 @@ h1 {
   padding: 24px;
   background: var(--card-bg);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   text-align: center;
   box-shadow: var(--shadow-soft);
 }
@@ -353,20 +386,20 @@ h1 {
 .view-tabs {
   display: flex;
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 4px;
-  gap: 4px;
+  padding: 5px;
+  gap: 6px;
   box-shadow: var(--shadow-soft);
 }
 
 .view-tab {
   flex: 1;
-  min-height: 40px;
+  min-height: 42px;
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -375,6 +408,11 @@ h1 {
   justify-content: center;
   gap: 6px;
   transition: all 0.2s;
+}
+
+.view-tab:hover {
+  color: var(--text-main);
+  background: var(--card-hover);
 }
 
 .view-tab.active {
@@ -397,7 +435,7 @@ h1 {
 /* ---- CALENDARIO & AGENDA ---- */
 .calendar-wrapper {
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 18px;
   display: flex;
@@ -488,8 +526,8 @@ h1 {
 
 .cal-day {
   aspect-ratio: 1;
-  background: var(--input-bg);
-  border: 1px solid var(--border-subtle);
+  background: var(--card-nested-bg);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-main);
   display: flex;
@@ -517,9 +555,10 @@ h1 {
 }
 
 .cal-day.today {
-  border-color: var(--primary);
+  border: 1.5px solid var(--primary);
   color: var(--primary);
   background: var(--primary-light);
+  font-weight: 700;
 }
 
 .cal-day.selected {
@@ -527,6 +566,7 @@ h1 {
   color: var(--primary-text) !important;
   font-weight: 700;
   box-shadow: var(--shadow-soft);
+  border-color: var(--primary);
 }
 
 .cal-dots {
@@ -551,7 +591,7 @@ h1 {
 
 /* Agenda del Día */
 .agenda-section {
-  border-top: 1px solid var(--border);
+  border-top: 1.5px solid var(--border);
   padding-top: 14px;
   display: flex;
   flex-direction: column;
@@ -561,7 +601,7 @@ h1 {
 @media (min-width: 920px) {
   .agenda-section {
     border-top: none;
-    border-left: 1px solid var(--border);
+    border-left: 1.5px solid var(--border);
     padding-top: 0;
     padding-left: 24px;
     position: sticky;
@@ -600,7 +640,8 @@ h1 {
   text-align: center;
   color: var(--text-muted);
   font-size: 0.85rem;
-  background: var(--card-hover);
+  background: var(--card-nested-bg);
+  border: 1.5px dashed var(--border);
   border-radius: var(--radius-md);
 }
 
@@ -615,11 +656,18 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--info);
   border-radius: var(--radius-md);
   padding: 10px 14px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.agenda-event-item:hover {
+  border-color: var(--info);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .event-time-badge {
@@ -668,12 +716,24 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--warning);
   border-radius: var(--radius-md);
   padding: 8px 12px;
   font-size: 0.85rem;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.agenda-task-item:hover {
+  border-color: var(--warning);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.agenda-task-item.completed {
+  border-left-color: var(--border);
+  opacity: 0.7;
 }
 
 .agenda-task-item.completed .task-title {
@@ -687,7 +747,7 @@ h1 {
   flex-direction: column;
   gap: 12px;
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   box-shadow: var(--shadow-soft);
@@ -710,8 +770,8 @@ h1 {
 /* Conmutador de Vistas (Lista / Kanban) */
 .tasks-view-mode-toggle {
   display: inline-flex;
-  background: var(--card-hover);
-  border: 1px solid var(--border);
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
   border-radius: 20px;
   padding: 3px;
   gap: 3px;
@@ -757,8 +817,8 @@ h1 {
 .filter-select {
   width: 100%;
   min-height: 40px;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
   color: var(--text-main);
   padding: 8px 12px;
   border-radius: var(--radius-sm);
@@ -812,11 +872,12 @@ h1 {
   align-items: center;
   gap: 12px;
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--border-strong);
   border-radius: var(--radius-md);
   padding: 12px;
-  box-shadow: var(--shadow-soft);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 
 .task-card:hover {
@@ -824,7 +885,20 @@ h1 {
   box-shadow: var(--shadow-card-hover);
 }
 
+.task-card.priority-alta {
+  border-left-color: var(--danger);
+}
+
+.task-card.priority-media {
+  border-left-color: var(--warning);
+}
+
+.task-card.priority-baja {
+  border-left-color: var(--success);
+}
+
 .task-card.completed {
+  border-left-color: var(--border);
   opacity: 0.65;
 }
 
@@ -926,8 +1000,8 @@ h1 {
 }
 
 .kanban-column {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 16px;
   display: flex;
@@ -953,7 +1027,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1.5px solid var(--border);
 }
 
 .kanban-col-title-wrap {
@@ -990,6 +1064,7 @@ h1 {
   font-size: 0.72rem;
   font-weight: 700;
   background: var(--card-hover);
+  border: 1px solid var(--border);
   color: var(--text-muted);
   padding: 2px 7px;
   border-radius: 10px;
@@ -1011,15 +1086,15 @@ h1 {
 }
 
 .kanban-card {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   cursor: grab;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
   user-select: none;
 }
@@ -1027,6 +1102,18 @@ h1 {
 .kanban-card:hover {
   border-color: var(--primary);
   box-shadow: var(--shadow-card-hover);
+}
+
+.kanban-card.status-pending {
+  border-left: 4px solid var(--warning);
+}
+
+.kanban-card.status-in_progress {
+  border-left: 4px solid var(--primary);
+}
+
+.kanban-card.status-completed {
+  border-left: 4px solid var(--success);
 }
 
 .kanban-card:active {
@@ -1099,14 +1186,15 @@ h1 {
 
 .note-card {
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--primary);
   border-radius: var(--radius-md);
   padding: 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 
@@ -1125,7 +1213,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border);
   padding-top: 8px;
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -1140,15 +1228,17 @@ h1 {
 
 .history-card {
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   cursor: pointer;
-  transition: border-color 0.2s;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .history-card:hover {
   border-color: var(--primary);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .history-meta {
@@ -1178,7 +1268,7 @@ h1 {
 /* ---- NATIVE DIALOG MODAL (Google Chrome MWG) ---- */
 dialog.modal-dialog {
   margin: auto;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border-strong);
   border-radius: var(--radius-lg);
   background: var(--card-bg);
   color: var(--text-main);
@@ -1591,8 +1681,8 @@ dialog::backdrop {
 
 @media (max-width: 640px) {
   .app-container {
-    padding: 12px 14px;
-    gap: 14px;
+    padding: 12px 14px calc(80px + env(safe-area-inset-bottom, 0px)) 14px;
+    gap: 12px;
   }
 
   .header {
@@ -1600,7 +1690,7 @@ dialog::backdrop {
   }
 
   .logo-icon {
-    font-size: 1.5rem;
+    font-size: 1.45rem;
   }
 
   h1 {
@@ -1630,33 +1720,119 @@ dialog::backdrop {
     height: 38px;
   }
 
-  .smart-textarea {
-    min-height: 80px;
-    padding: 10px;
-    font-size: 0.92rem;
+  /* Opción 1: Entrada Inteligente Compacta y Colapsable */
+  .input-card {
+    padding: 12px 14px;
+    gap: 10px;
   }
 
-  .view-tabs {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 4px;
-    gap: 4px;
+  .input-card .smart-textarea {
+    min-height: 48px;
+    height: 48px;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    border-radius: var(--radius-sm);
   }
 
-  .view-tabs::-webkit-scrollbar {
+  /* Expansión al enfocar o escribir */
+  .input-card .smart-textarea:focus,
+  .input-card.expanded .smart-textarea {
+    min-height: 90px;
+    height: auto;
+  }
+
+  .tip-shortcut {
+    display: none; /* Atajo Ctrl+Enter innecesario en celulares */
+  }
+
+  .input-action-row {
+    justify-content: flex-end;
+  }
+
+  .input-action-row .btn-primary {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* Chips de ejemplos colapsables en celular */
+  .example-chips {
     display: none;
+    margin-top: 4px;
+  }
+
+  .example-chips.show-mobile {
+    display: flex;
+    animation: fadeInChips 0.2s ease-out;
+  }
+
+  @keyframes fadeInChips {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Opción 2: Barra de Navegación Inferior Nativa (Bottom Nav Bar) */
+  .view-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 950;
+    background: var(--card-bg);
+    border: none;
+    border-top: 2px solid var(--border);
+    border-radius: 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
+    box-shadow: 0 -4px 20px rgba(2, 132, 199, 0.12);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 4px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .view-tab {
-    min-height: 42px;
-    font-size: 0.8rem;
-    padding: 6px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 48px;
+    padding: 4px 2px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
     white-space: nowrap;
+    border: none;
+  }
+
+  .view-tab .tab-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .view-tab.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    box-shadow: none;
+    font-weight: 700;
+  }
+
+  [data-theme="dark"] .view-tab.active {
+    background: rgba(56, 189, 248, 0.18);
+    color: var(--primary);
+  }
+
+  /* Posición de Toast por encima de la barra inferior */
+  .toast-notification {
+    bottom: calc(75px + env(safe-area-inset-bottom, 0px));
   }
 
   .cal-grid {
-    gap: 4px;
+    gap: 3px;
   }
 
   .cal-day {

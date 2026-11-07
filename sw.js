@@ -3,7 +3,7 @@
  * Estrategia: Cache-First para recursos estáticos y Network-First para APIs
  */
 
-const CACHE_NAME = 'organiza-ai-cache-v10';
+const CACHE_NAME = 'organiza-ai-cache-v11';
 const STATIC_ASSETS = [
   './',
   'index.html',

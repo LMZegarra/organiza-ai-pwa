@@ -235,14 +235,17 @@
     </dialog>
 
     <!-- Área de Entrada de Texto Inteligente -->
-    <section class="input-card">
+    <section class="input-card" id="inputCardSection">
       <form id="organizeForm" class="organize-form">
-        <label for="inputText" class="input-label">¿Qué deseas planificar u organizar hoy?</label>
+        <div class="input-header-row">
+          <label for="inputText" class="input-label">✨ ¿Qué deseas planificar u organizar hoy?</label>
+          <button type="button" id="btnToggleExamples" class="btn-examples-toggle" aria-expanded="false" title="Mostrar sugerencias">💡 Ver ejemplos</button>
+        </div>
         <textarea
           id="inputText"
           class="smart-textarea"
-          rows="3"
-          placeholder="Escribe lo que tengas en mente... Ej: 'Mañana a las 4pm cita médica con el dentista, comprar café el viernes y preparar informe semanal'"
+          rows="2"
+          placeholder="Escribe lo que tengas en mente... (ej: Mañana a las 4pm dentista y comprar café el viernes)"
           required
         ></textarea>
         
@@ -257,8 +260,8 @@
       </form>
 
       <!-- Chips de ejemplos rápidos -->
-      <div class="example-chips">
-        <span class="chips-label">Ejemplos:</span>
+      <div class="example-chips" id="exampleChipsContainer">
+        <span class="chips-label">Sugerencias:</span>
         <button class="chip-btn" type="button" data-text="Mañana a las 15:30 reunión de equipo por Zoom y pagar la tarjeta de crédito el viernes">📅 Reunión y pago</button>
         <button class="chip-btn" type="button" data-text="Comprar leche, huevos y fruta el sábado por la mañana. Prioridad alta">🛒 Compras del sábado</button>
         <button class="chip-btn" type="button" data-text="Entregar borrador del proyecto el 15 de noviembre y revisar correos pendientes">💼 Proyecto y correos</button>
@@ -272,18 +275,22 @@
     </div>
 
     <!-- Navegación de Vistas Principales -->
-    <nav class="view-tabs">
+    <nav class="view-tabs" aria-label="Navegación principal">
       <button class="view-tab active" data-target="viewCalendar">
-        <span class="tab-icon">📅</span> Calendario
+        <span class="tab-icon">📅</span>
+        <span class="tab-label">Calendario</span>
       </button>
       <button class="view-tab" data-target="viewTasks">
-        <span class="tab-icon">✅</span> Tareas (<span id="badgeTaskCount">0</span>)
+        <span class="tab-icon">✅</span>
+        <span class="tab-label">Tareas (<span id="badgeTaskCount">0</span>)</span>
       </button>
       <button class="view-tab" data-target="viewNotes">
-        <span class="tab-icon">💡</span> Ideas (<span id="badgeNoteCount">0</span>)
+        <span class="tab-icon">💡</span>
+        <span class="tab-label">Ideas (<span id="badgeNoteCount">0</span>)</span>
       </button>
       <button class="view-tab" data-target="viewHistory">
-        <span class="tab-icon">📂</span> Historial
+        <span class="tab-icon">📂</span>
+        <span class="tab-label">Historial</span>
       </button>
     </nav>
 
