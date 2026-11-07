@@ -34,79 +34,29 @@
     <dialog id="dialogSettings" class="modal-dialog">
       <div class="dialog-inner">
         <div class="dialog-header">
-          <h3>⚙️ Configuración y Sincronización</h3>
+          <h3>⚙️ Ajustes y Clave de API</h3>
           <button id="btnCloseModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
 
-        <div class="settings-tabs">
-          <button class="settings-tab-btn active" data-tab="tabAiSettings">🤖 Inteligencia Artificial</button>
-          <button class="settings-tab-btn" data-tab="tabCloudSettings">☁️ Sincronización Nube</button>
-        </div>
-
-        <!-- Pestaña 1: Configuración IA -->
-        <div id="tabAiSettings" class="settings-tab-content active">
-          <label class="modal-label">Proveedor de IA:</label>
-          <select id="selectAiProvider" class="styled-select">
-            <option value="gemini" selected>Google Gemini (Recomendado, rápido y gratuito)</option>
-            <option value="openrouter">OpenRouter (Modelos libres como Llama 3 / Gemma)</option>
-          </select>
-
-          <!-- Sección Gemini -->
-          <div id="sectionGeminiConfig" class="config-subgroup">
-            <label class="modal-label">Google Gemini API Key:</label>
-            <input type="password" id="inputGeminiKey" class="styled-input" placeholder="AIzaSy..." />
-            <small class="help-text">Obtén tu clave gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a></small>
-
-            <label class="modal-label" style="margin-top:10px;">Modelo de Gemini:</label>
-            <select id="selectGeminiModel" class="styled-select">
-              <option value="gemini-1.5-flash" selected>Gemini 1.5 Flash (Ultrarrápido y preciso)</option>
-              <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
-            </select>
+        <div class="settings-content-single" style="display:flex; flex-direction:column; gap:10px;">
+          <div class="sync-badge" id="keyStatusBanner" style="align-self:flex-start;">
+            <span class="sync-dot"></span> <span id="keyStatusText">Usando OpenRouter por defecto</span>
           </div>
 
-          <!-- Sección OpenRouter -->
-          <div id="sectionOpenRouterConfig" class="config-subgroup hidden">
-            <label class="modal-label">OpenRouter API Key:</label>
-            <input type="password" id="inputOpenRouterKey" class="styled-input" placeholder="sk-or-v1-..." />
-            <small class="help-text">Obtén tu clave en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a></small>
-
-            <label class="modal-label" style="margin-top:10px;">Modelo de OpenRouter:</label>
-            <select id="selectOpenRouterModel" class="styled-select">
-              <option value="openrouter/free" selected>Auto Free (Enrutador oficial gratuito)</option>
-              <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B (Gratis)</option>
-              <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash Exp (Gratis)</option>
-              <option value="google/gemma-4-31b-it:free">Google Gemma 4 31B (Gratis)</option>
-            </select>
-          </div>
+          <label class="modal-label" for="inputCustomOpenRouterKey">API Key Propia de OpenRouter (Opcional):</label>
+          <input
+            type="password"
+            id="inputCustomOpenRouterKey"
+            class="styled-input"
+            placeholder="sk-or-v1-... (dejar vacío para usar la predeterminada)"
+          />
+          <small class="help-text">
+            Si cuentas con una suscripción o saldo propio en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a>, ingresa tu clave personal aquí. Si lo dejas en blanco, la app funcionará con la configuración por defecto.
+          </small>
         </div>
 
-        <!-- Pestaña 2: Configuración Supabase Cloud Sync -->
-        <div id="tabCloudSettings" class="settings-tab-content">
-          <p class="modal-desc">
-            Sincroniza tus tareas y calendario en tiempo real entre tu <strong>computadora</strong> y tu <strong>teléfono celular</strong> usando un proyecto gratuito de Supabase.
-          </p>
-
-          <label class="modal-label">Supabase Project URL:</label>
-          <input type="url" id="inputSupabaseUrl" class="styled-input" placeholder="https://xyzcompany.supabase.co" />
-
-          <label class="modal-label" style="margin-top:10px;">Supabase Anon Key:</label>
-          <input type="password" id="inputSupabaseAnonKey" class="styled-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." />
-
-          <div class="test-sync-row">
-            <button id="btnTestSupabase" class="btn btn-secondary btn-sm" type="button">🔍 Probar Conexión</button>
-            <span id="testSyncStatus" class="test-status-label"></span>
-          </div>
-
-          <details class="schema-help-box">
-            <summary>📋 ¿Cómo configurar las tablas en Supabase?</summary>
-            <p>1. Crea un proyecto gratuito en <a href="https://supabase.com" target="_blank" rel="noopener">supabase.com</a>.</p>
-            <p>2. Ve al <strong>SQL Editor</strong> en Supabase y pega el script que se encuentra en el archivo <code>supabase_schema.sql</code> de tu proyecto.</p>
-            <p>3. Copia la URL del proyecto y la <code>anon public key</code> de Project Settings > API y pégalas aquí.</p>
-          </details>
-        </div>
-
-        <div class="dialog-actions">
-          <button id="btnSaveSettings" class="btn btn-primary" type="button">Guardar Ajustes</button>
+        <div class="dialog-actions" style="margin-top:14px;">
+          <button id="btnSaveSettings" class="btn btn-primary" type="button">Guardar</button>
           <button id="btnDismissModal" class="btn btn-secondary" type="button">Cerrar</button>
         </div>
       </div>

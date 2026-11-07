@@ -3,7 +3,7 @@
  * Estrategia: Cache-First para recursos estáticos y Network-First para APIs
  */
 
-const CACHE_NAME = 'organiza-ai-cache-v2';
+const CACHE_NAME = 'organiza-ai-cache-v3';
 const STATIC_ASSETS = [
   './',
   'index.html',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   'app.js',
   'manifest.json',
   'icon.svg',
+  'js/config.js',
   'js/ai-service.js',
   'js/storage-service.js',
   'js/supabase-client.js',
@@ -46,12 +47,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // No interceptar peticiones a la API del servidor ni a Supabase/OpenRouter/Google
+  // No interceptar peticiones a la API del servidor ni a Supabase/OpenRouter
   if (
     url.pathname.includes('/api/') ||
     url.hostname.includes('supabase.co') ||
-    url.hostname.includes('openrouter.ai') ||
-    url.hostname.includes('googleapis.com')
+    url.hostname.includes('openrouter.ai')
   ) {
     return;
   }

@@ -3,21 +3,31 @@
  * Cliente de integración con Supabase para sincronización en tiempo real.
  */
 
+import { APP_CONFIG } from './config.js';
+
 let supabaseInstance = null;
 let realtimeChannel = null;
 
 export const SupabaseService = {
+  getUrl() {
+    return localStorage.getItem('supabase_url') || APP_CONFIG.SUPABASE_URL || '';
+  },
+
+  getAnonKey() {
+    return localStorage.getItem('supabase_anon_key') || APP_CONFIG.SUPABASE_ANON_KEY || '';
+  },
+
   isConfigured() {
-    const url = localStorage.getItem('supabase_url');
-    const key = localStorage.getItem('supabase_anon_key');
-    return Boolean(url && key && url.trim().length > 0 && key.trim().length > 0);
+    const url = this.getUrl();
+    const key = this.getAnonKey();
+    return Boolean(url && key && url.includes('supabase.co') && key.length > 20);
   },
 
   getClient() {
     if (supabaseInstance) return supabaseInstance;
 
-    const url = localStorage.getItem('supabase_url');
-    const key = localStorage.getItem('supabase_anon_key');
+    const url = this.getUrl();
+    const key = this.getAnonKey();
 
     if (!url || !key) return null;
 
@@ -41,12 +51,15 @@ export const SupabaseService = {
   },
 
   async testConnection(url, key) {
-    if (!url || !key) throw new Error('Debes ingresar la URL y la Anon Key de Supabase');
+    const u = url || this.getUrl();
+    const k = key || this.getAnonKey();
+
+    if (!u || !k) throw new Error('Debes ingresar la URL y la Anon Key de Supabase');
     if (!window.supabase || !window.supabase.createClient) {
       throw new Error('La librería de Supabase aún no se ha cargado en el navegador');
     }
 
-    const testClient = window.supabase.createClient(url.trim(), key.trim());
+    const testClient = window.supabase.createClient(u.trim(), k.trim());
     const { data, error } = await testClient.from('organiza_tasks').select('id').limit(1);
     if (error) {
       throw new Error(`Error de conexión con Supabase: ${error.message}`);

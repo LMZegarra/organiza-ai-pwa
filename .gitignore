@@ -1,9 +1,15 @@
 # Dependencias
 node_modules/
 
-# Archivos de entorno y claves
+# Archivos de credenciales y claves sensibles (NUNCA subir a GitHub)
 .env
-.env.local
+.env.*
+claves*.txt
+*clave*
+*.key
+*.pem
+js/config.local.js
+public/js/config.local.js
 
 # Archivos temporales del sistema y uploads
 /tmp/

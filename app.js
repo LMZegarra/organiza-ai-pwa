@@ -8,6 +8,7 @@ import { storage } from './js/storage-service.js';
 import { SupabaseService } from './js/supabase-client.js';
 import { AIService } from './js/ai-service.js';
 import { CalendarComponent } from './js/calendar-component.js';
+import { APP_CONFIG } from './js/config.js';
 
 // DOM Elements
 const organizeForm = document.getElementById('organizeForm');
@@ -39,17 +40,9 @@ const btnSettings = document.getElementById('btnSettings');
 const btnCloseModal = document.getElementById('btnCloseModal');
 const btnDismissModal = document.getElementById('btnDismissModal');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
-const selectAiProvider = document.getElementById('selectAiProvider');
-const sectionGeminiConfig = document.getElementById('sectionGeminiConfig');
-const sectionOpenRouterConfig = document.getElementById('sectionOpenRouterConfig');
-const inputGeminiKey = document.getElementById('inputGeminiKey');
-const selectGeminiModel = document.getElementById('selectGeminiModel');
-const inputOpenRouterKey = document.getElementById('inputOpenRouterKey');
-const selectOpenRouterModel = document.getElementById('selectOpenRouterModel');
-const inputSupabaseUrl = document.getElementById('inputSupabaseUrl');
-const inputSupabaseAnonKey = document.getElementById('inputSupabaseAnonKey');
-const btnTestSupabase = document.getElementById('btnTestSupabase');
-const testSyncStatus = document.getElementById('testSyncStatus');
+const inputCustomOpenRouterKey = document.getElementById('inputCustomOpenRouterKey');
+const keyStatusBanner = document.getElementById('keyStatusBanner');
+const keyStatusText = document.getElementById('keyStatusText');
 
 // Inicializar Calendario
 const calendarMount = document.getElementById('calendarMount');
@@ -92,10 +85,8 @@ document.querySelectorAll('.view-tab').forEach(tab => {
 // -------------------------------------------------------------
 // Entrada de Texto Inteligente & Envío IME-safe
 // -------------------------------------------------------------
-// Detectar atajo Ctrl+Enter o Enter seguro con IME (según Modern Web Guidance)
 inputText.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
-    // Si presiona Ctrl+Enter o Cmd+Enter, enviar formulario
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       if (e.isComposing || e.keyCode === 229) return;
@@ -131,7 +122,6 @@ organizeForm.addEventListener('submit', async (e) => {
     inputText.value = '';
     alert('✨ ¡Organizado con éxito! Revisa tu calendario y lista de tareas.');
 
-    // Si generó eventos, cambiar a la pestaña de calendario
     if (aiResult.calendar_events && aiResult.calendar_events.length > 0) {
       document.querySelector('.view-tab[data-target="viewCalendar"]')?.click();
     } else {
@@ -140,7 +130,7 @@ organizeForm.addEventListener('submit', async (e) => {
 
   } catch (err) {
     console.error('Error al procesar:', err);
-    if (err.message.includes('API Key') || err.message.includes('Configuración')) {
+    if (err.message.includes('API Key') || err.message.includes('Ajustes')) {
       dialogSettings.showModal();
     }
     alert(err.message || 'Error al comunicarse con la IA');
@@ -339,46 +329,17 @@ btnClearHistory.addEventListener('click', () => {
 // Modal de Ajustes (Native <dialog>)
 // -------------------------------------------------------------
 function loadSettingsIntoDialog() {
-  const provider = localStorage.getItem('ai_provider') || 'gemini';
-  selectAiProvider.value = provider;
-  toggleProviderFields(provider);
+  const customKey = localStorage.getItem('custom_openrouter_key') || '';
+  inputCustomOpenRouterKey.value = customKey;
 
-  inputGeminiKey.value = localStorage.getItem('gemini_api_key') || '';
-  selectGeminiModel.value = localStorage.getItem('gemini_model') || 'gemini-1.5-flash';
-
-  inputOpenRouterKey.value = localStorage.getItem('openrouter_api_key') || '';
-  selectOpenRouterModel.value = localStorage.getItem('openrouter_model') || 'openrouter/free';
-
-  inputSupabaseUrl.value = localStorage.getItem('supabase_url') || '';
-  inputSupabaseAnonKey.value = localStorage.getItem('supabase_anon_key') || '';
-  testSyncStatus.textContent = '';
-}
-
-function toggleProviderFields(provider) {
-  if (provider === 'gemini') {
-    sectionGeminiConfig.classList.remove('hidden');
-    sectionOpenRouterConfig.classList.add('hidden');
+  if (customKey) {
+    keyStatusText.textContent = 'Usando tu API Key personalizada';
+    keyStatusBanner.className = 'sync-badge synced';
   } else {
-    sectionGeminiConfig.classList.add('hidden');
-    sectionOpenRouterConfig.classList.remove('hidden');
+    keyStatusText.textContent = 'Usando OpenRouter por defecto';
+    keyStatusBanner.className = 'sync-badge local';
   }
 }
-
-selectAiProvider.addEventListener('change', (e) => {
-  toggleProviderFields(e.target.value);
-});
-
-// Pestañas internas del Modal de Ajustes
-document.querySelectorAll('.settings-tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-
-    btn.classList.add('active');
-    const target = document.getElementById(btn.dataset.tab);
-    if (target) target.classList.add('active');
-  });
-});
 
 btnSettings.addEventListener('click', () => {
   loadSettingsIntoDialog();
@@ -392,46 +353,14 @@ const closeSettingsDialog = () => {
 btnCloseModal.addEventListener('click', closeSettingsDialog);
 btnDismissModal.addEventListener('click', closeSettingsDialog);
 
-btnTestSupabase.addEventListener('click', async () => {
-  const url = inputSupabaseUrl.value.trim();
-  const key = inputSupabaseAnonKey.value.trim();
-  testSyncStatus.textContent = 'Probando conexión...';
-  testSyncStatus.className = 'test-status-label';
-
-  try {
-    await SupabaseService.testConnection(url, key);
-    testSyncStatus.textContent = '✅ Conexión exitosa';
-    testSyncStatus.className = 'test-status-label success';
-  } catch (err) {
-    testSyncStatus.textContent = `❌ ${err.message}`;
-    testSyncStatus.className = 'test-status-label error';
-  }
-});
-
-btnSaveSettings.addEventListener('click', async () => {
-  localStorage.setItem('ai_provider', selectAiProvider.value);
-  localStorage.setItem('gemini_api_key', inputGeminiKey.value.trim());
-  localStorage.setItem('gemini_model', selectGeminiModel.value);
-  localStorage.setItem('openrouter_api_key', inputOpenRouterKey.value.trim());
-  localStorage.setItem('openrouter_model', selectOpenRouterModel.value);
-
-  const prevUrl = localStorage.getItem('supabase_url');
-  const prevKey = localStorage.getItem('supabase_anon_key');
-  const newUrl = inputSupabaseUrl.value.trim();
-  const newKey = inputSupabaseAnonKey.value.trim();
-
-  localStorage.setItem('supabase_url', newUrl);
-  localStorage.setItem('supabase_anon_key', newKey);
-
-  // Reiniciar cliente si cambiaron credenciales
-  if (prevUrl !== newUrl || prevKey !== newKey) {
-    SupabaseService.resetClient();
-    if (newUrl && newKey) {
-      storage.syncWithCloud();
-    }
+btnSaveSettings.addEventListener('click', () => {
+  const customKey = inputCustomOpenRouterKey.value.trim();
+  if (customKey) {
+    localStorage.setItem('custom_openrouter_key', customKey);
+  } else {
+    localStorage.removeItem('custom_openrouter_key');
   }
 
-  updateSyncBadge();
   alert('Ajustes guardados correctamente.');
   closeSettingsDialog();
 });
@@ -443,6 +372,7 @@ storage.subscribe(() => {
   renderTasks();
   renderNotes();
   renderHistory();
+  updateSyncBadge();
 });
 
 // Carga Inicial

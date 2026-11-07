@@ -1,13 +1,11 @@
 /**
  * ai-service.js
- * Servicio unificado de Inteligencia Artificial para estructurar texto en:
- * - Tareas (prioridad, categoría, fecha límite)
- * - Eventos de Calendario (fecha, hora inicio/fin, ubicación)
- * - Resumen e Ideas Clave
- * 
- * Soporta tanto llamada a backend Express como ejecución directa en el navegador
- * (para despliegue estático gratuito en GitHub Pages / Vercel sin servidor).
+ * Servicio de Inteligencia Artificial exclusivo para OpenRouter.
+ * Utiliza por defecto las credenciales del sistema y permite
+ * al usuario ingresar una API Key propia opcionalmente.
  */
+
+import { APP_CONFIG } from './config.js';
 
 export class AIService {
   static cleanAndParseResponse(rawContent) {
@@ -100,45 +98,17 @@ REGLAS ESTRICTAS DE EXTRACCIÓN:
 `.trim();
   }
 
-  // Llamada directa a Google Gemini desde el navegador (serverless)
-  static async directGemini(apiKey, text, model = 'gemini-1.5-flash', currentDate) {
-    const prompt = `${this.getSystemPrompt(currentDate)}\n\nTexto del usuario:\n"""\n${text}\n"""`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2
-        }
-      })
-    });
-
-    const resJson = await res.json();
-    if (!res.ok) {
-      throw new Error(resJson.error?.message || `Error en Google Gemini (${res.status})`);
-    }
-
-    const raw = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
-    return this.cleanAndParseResponse(raw);
-  }
-
-  // Llamada directa a OpenRouter desde el navegador (serverless)
-  static async directOpenRouter(apiKey, text, preferredModel = 'openrouter/free', currentDate) {
+  static async directOpenRouter(apiKey, text, preferredModel, currentDate) {
     const prompt = `${this.getSystemPrompt(currentDate)}\n\nTexto del usuario:\n"""\n${text}\n"""`;
     const models = [
       preferredModel,
-      'google/gemini-2.0-flash-exp:free',
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'openrouter/free'
+      ...(APP_CONFIG.FALLBACK_MODELS || ['openrouter/free'])
     ].filter(Boolean);
 
     let lastErr = null;
     for (const m of [...new Set(models)]) {
       try {
+        console.log(`[OpenRouter] Intentando con: ${m}...`);
         const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -158,53 +128,46 @@ REGLAS ESTRICTAS DE EXTRACCIÓN:
         const content = resJson.choices?.[0]?.message?.content;
         return this.cleanAndParseResponse(content);
       } catch (err) {
+        console.warn(`[OpenRouter] Falló modelo ${m}:`, err.message);
         lastErr = err;
       }
     }
-    throw lastErr || new Error('No se pudo procesar con OpenRouter');
+    throw lastErr || new Error('No se pudo procesar con los modelos de OpenRouter');
   }
 
-  static async processText(text, options = {}) {
+  static async processText(text) {
     if (!text || text.trim().length === 0) {
       throw new Error('El texto no puede estar vacío');
     }
 
-    const provider = options.provider || localStorage.getItem('ai_provider') || 'gemini';
-    const geminiKey = options.geminiKey || localStorage.getItem('gemini_api_key') || '';
-    const openrouterKey = options.openrouterKey || localStorage.getItem('openrouter_api_key') || '';
-    const geminiModel = options.geminiModel || localStorage.getItem('gemini_model') || 'gemini-1.5-flash';
-    const openrouterModel = options.openrouterModel || localStorage.getItem('openrouter_model') || 'openrouter/free';
-
-    const apiKey = provider === 'gemini' ? geminiKey : openrouterKey;
-    const model = provider === 'gemini' ? geminiModel : openrouterModel;
+    // Prioridad de credencial:
+    // 1. Clave personal del usuario (si la agregó en Ajustes)
+    // 2. Clave por defecto de la app
+    const customKey = localStorage.getItem('custom_openrouter_key')?.trim();
+    const apiKey = customKey || APP_CONFIG.DEFAULT_OPENROUTER_KEY;
+    const model = APP_CONFIG.DEFAULT_OPENROUTER_MODEL || 'openrouter/free';
     const currentDate = new Date().toISOString().slice(0, 10);
 
     if (!apiKey) {
-      const providerName = provider === 'gemini' ? 'Google Gemini' : 'OpenRouter';
-      throw new Error(`Por favor ingresa tu API Key de ${providerName} en Configuración (⚙️).`);
+      throw new Error('No hay una API Key de OpenRouter configurada. Puedes agregar tu clave personal en Ajustes (⚙️).');
     }
 
-    // 1. Intentar llamar al backend local (si está disponible en modo Node.js)
+    // 1. Intentar llamar al backend local (si existe)
     try {
       const response = await fetch('/api/organize-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.trim(), provider, apiKey, model, currentDate })
+        body: JSON.stringify({ text: text.trim(), provider: 'openrouter', apiKey, model, currentDate })
       });
 
       if (response.ok) {
         return await response.json();
       }
     } catch {
-      // Backend no disponible (modo static/GitHub Pages/Vercel) -> Fallback directo en cliente
-      console.log('[AIService] Backend local no detectado. Procesando directamente en el navegador...');
+      // Backend no disponible (modo static GitHub Pages / Vercel)
     }
 
-    // 2. Ejecución Directa en el Navegador (Serverless 100% Online)
-    if (provider === 'gemini') {
-      return await this.directGemini(apiKey, text.trim(), model, currentDate);
-    } else {
-      return await this.directOpenRouter(apiKey, text.trim(), model, currentDate);
-    }
+    // 2. Llamada directa a OpenRouter desde el navegador (Serverless)
+    return await this.directOpenRouter(apiKey, text.trim(), model, currentDate);
   }
 }
