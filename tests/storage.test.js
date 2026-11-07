@@ -46,6 +46,47 @@ function deleteTask(id) {
   localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
 }
 
+const EVENT_COLORS = [
+  '#0284c7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#6366f1', '#ea580c'
+];
+
+function getNextAvailableEventColor(date, existingEvents = [], currentEventId = null) {
+  if (!date) return EVENT_COLORS[0];
+  const sameDateEvents = existingEvents.filter(e => e.date === date && e.id !== currentEventId);
+  const usedColors = new Set(sameDateEvents.map(e => (e.color || '').toLowerCase()).filter(Boolean));
+  const available = EVENT_COLORS.find(c => !usedColors.has(c.toLowerCase()));
+  if (available) return available;
+  return EVENT_COLORS[sameDateEvents.length % EVENT_COLORS.length];
+}
+
+function getEvents() {
+  const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS) || '[]');
+  return parsed.map((e, idx) => {
+    if (!e.color) {
+      e.color = EVENT_COLORS[idx % EVENT_COLORS.length];
+    }
+    return e;
+  });
+}
+
+function saveEvent(event) {
+  const events = getEvents();
+  if (!event.color) {
+    event.color = getNextAvailableEventColor(event.date, events, event.id);
+  }
+  const idx = events.findIndex(e => e.id === event.id);
+  if (idx >= 0) events[idx] = { ...events[idx], ...event };
+  else events.push(event);
+  localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+}
+
+function deleteEvent(id) {
+  let events = getEvents();
+  events = events.filter(e => e.id !== id);
+  localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+}
+
 function getNotes() {
   return JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES) || '[]');
 }
@@ -129,5 +170,31 @@ assert.strictEqual(searchResults[0].id, 'n1');
 
 deleteNote('n2');
 assert.strictEqual(getNotes().length, 1);
+
+// Pruebas de Eventos y Colores Distintos por Día
+saveEvent({ id: 'e1', title: 'Reunión Matutina', date: '2026-11-15', start_time: '09:00' });
+assert.strictEqual(getEvents().length, 1);
+assert.strictEqual(getEvents()[0].color, '#0284c7'); // Primer color por defecto
+
+// 2do evento en el mismo día debe recibir un color distinto automáticamente
+saveEvent({ id: 'e2', title: 'Almuerzo de Equipo', date: '2026-11-15', start_time: '13:00' });
+assert.strictEqual(getEvents().length, 2);
+const ev2 = getEvents().find(e => e.id === 'e2');
+assert.notStrictEqual(ev2.color, '#0284c7'); // Color distinto al primero
+assert.strictEqual(ev2.color, '#10b981'); // Segundo color de la paleta
+
+// 3er evento en el mismo día debe recibir el tercer color distinto
+saveEvent({ id: 'e3', title: 'Dentista', date: '2026-11-15', start_time: '16:00' });
+const ev3 = getEvents().find(e => e.id === 'e3');
+assert.strictEqual(ev3.color, '#f59e0b');
+
+// Edición de color manual por el usuario (paleta de 10 colores)
+saveEvent({ id: 'e3', color: '#ec4899' }); // Rosa fucsia
+assert.strictEqual(getEvents().find(e => e.id === 'e3').color, '#ec4899');
+
+deleteEvent('e1');
+deleteEvent('e2');
+deleteEvent('e3');
+assert.strictEqual(getEvents().length, 0);
 
 console.log('✅ Pruebas de StorageService pasaron exitosamente.');

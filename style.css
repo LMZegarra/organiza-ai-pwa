@@ -619,21 +619,64 @@ h1 {
 .cal-dots {
   display: flex;
   gap: 3px;
-  margin-top: 2px;
+  margin-top: 3px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .dot-event {
   background-color: var(--info);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.35);
 }
 
 .dot-task {
   background-color: var(--warning);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.dot-more {
+  font-size: 9px;
+  line-height: 6px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+/* Contraste extremo en día seleccionado: los puntitos se vuelven blancos o de su color opuesto */
+.cal-day.selected .dot-event {
+  background-color: var(--primary-text) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* En tema claro: el día seleccionado es azul (#0284c7), los puntitos se vuelven blanco puro */
+[data-theme="light"] .cal-day.selected .dot-event,
+:root:not([data-theme="dark"]) .cal-day.selected .dot-event {
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* En tema oscuro: el día seleccionado es celeste brillante (#38bdf8), los puntitos se vuelven su color opuesto (azul marino profundo) */
+[data-theme="dark"] .cal-day.selected .dot-event {
+  background-color: #08101c !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.cal-day.selected .dot-task {
+  box-shadow: 0 0 0 1.2px var(--primary-text);
+}
+
+.cal-day.selected .dot-more {
+  color: var(--primary-text) !important;
 }
 
 /* Agenda del Día */
@@ -725,6 +768,18 @@ h1 {
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.event-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.4);
 }
 
 .event-details {
@@ -1683,6 +1738,69 @@ dialog.modal-dialog.confirm-dialog {
   line-height: 1.5;
   color: var(--text-main);
   padding: 6px 0;
+}
+
+/* ---- PALETA DE 10 COLORES PARA EVENTOS ---- */
+.color-picker-group {
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+.event-color-palette {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  background: var(--card-nested-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: 6px;
+}
+
+.color-swatch-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  forced-color-adjust: none; /* Regla WCAG/MWG para preservar color esencial */
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.color-swatch-btn:focus-visible {
+  outline: 2.5px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.color-swatch-btn.active {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 2.5px var(--card-bg), 0 0 0 4.5px var(--primary);
+}
+
+.color-swatch-btn .swatch-check {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  display: none;
+}
+
+.color-swatch-btn.active .swatch-check {
+  display: block;
 }
 
 /* ---- AUTENTICACIÓN & PERFIL DE USUARIO ---- */

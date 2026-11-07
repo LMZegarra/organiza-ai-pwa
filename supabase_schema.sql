@@ -32,12 +32,14 @@ CREATE TABLE IF NOT EXISTS organiza_events (
   end_time TIME,
   location TEXT,
   description TEXT,
+  color TEXT DEFAULT '#0284c7',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Asegurar columna user_id en tablas preexistentes
+-- Asegurar columna user_id y color en tablas preexistentes
 ALTER TABLE organiza_events ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid();
+ALTER TABLE organiza_events ADD COLUMN IF NOT EXISTS color TEXT DEFAULT '#0284c7';
 
 -- Índices para búsqueda rápida por usuario y fecha de evento
 CREATE INDEX IF NOT EXISTS idx_organiza_events_user_id ON organiza_events(user_id);

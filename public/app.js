@@ -4,7 +4,7 @@
  * Integra AIService, StorageService, SupabaseService y CalendarComponent.
  */
 
-import { storage } from './js/storage-service.js';
+import { storage, EVENT_PALETTE, EVENT_COLORS, getNextAvailableEventColor } from './js/storage-service.js';
 import { SupabaseService } from './js/supabase-client.js';
 import { AIService } from './js/ai-service.js';
 import { CalendarComponent } from './js/calendar-component.js';
@@ -105,6 +105,8 @@ const eventModalLocation = document.getElementById('eventModalLocation');
 const eventModalDescription = document.getElementById('eventModalDescription');
 const btnCloseEventModal = document.getElementById('btnCloseEventModal');
 const btnDismissEventModal = document.getElementById('btnDismissEventModal');
+const eventColorPalette = document.getElementById('eventColorPalette');
+const eventModalColor = document.getElementById('eventModalColor');
 
 // Dialog Confirmación Estilizado
 const dialogConfirmModal = document.getElementById('dialogConfirmModal');
@@ -758,13 +760,53 @@ btnClearNotes.addEventListener('click', () => {
 });
 
 // -------------------------------------------------------------
-// Modal Eventos del Calendario
+// Modal Eventos del Calendario & Paleta de 10 Colores
 // -------------------------------------------------------------
+function renderColorPalette() {
+  if (!eventColorPalette) return;
+  eventColorPalette.innerHTML = EVENT_PALETTE.map(item => `
+    <button
+      type="button"
+      class="color-swatch-btn"
+      data-color="${item.hex}"
+      title="${item.name}"
+      aria-label="Color ${item.name}"
+      role="radio"
+      aria-checked="false"
+      style="background-color: ${item.hex};"
+    >
+      <span class="swatch-check" aria-hidden="true">✓</span>
+    </button>
+  `).join('');
+
+  eventColorPalette.querySelectorAll('.color-swatch-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setSelectedEventColor(btn.dataset.color);
+    });
+  });
+}
+
+function setSelectedEventColor(selectedHex) {
+  const normalized = (selectedHex || EVENT_COLORS[0]).toLowerCase();
+  if (eventModalColor) {
+    eventModalColor.value = normalized;
+  }
+  if (!eventColorPalette) return;
+  const buttons = eventColorPalette.querySelectorAll('.color-swatch-btn');
+  buttons.forEach(btn => {
+    const btnColor = (btn.dataset.color || '').toLowerCase();
+    const isMatch = btnColor === normalized;
+    btn.classList.toggle('active', isMatch);
+    btn.setAttribute('aria-checked', isMatch ? 'true' : 'false');
+  });
+}
+
 function openEventModal(eventId = null, defaultDate = null) {
   if (!dialogEventModal) return;
 
+  const allEvents = storage.getEvents();
+
   if (eventId) {
-    const allEvents = storage.getEvents();
     const ev = allEvents.find(e => e.id === eventId);
     if (ev) {
       eventModalHeading.textContent = '✏️ Editar Evento';
@@ -775,23 +817,40 @@ function openEventModal(eventId = null, defaultDate = null) {
       eventModalEndTime.value = ev.end_time || '';
       eventModalLocation.value = ev.location || '';
       eventModalDescription.value = ev.description || '';
+      setSelectedEventColor(ev.color || EVENT_COLORS[0]);
       dialogEventModal.showModal();
       return;
     }
   }
 
   // Nuevo evento manual
+  const targetDate = defaultDate || (calendarComponent ? calendarComponent.formatDateISO(calendarComponent.selectedDate) : new Date().toISOString().split('T')[0]);
   eventModalHeading.textContent = '📅 Nuevo Evento';
   eventModalId.value = '';
   eventModalTitle.value = '';
-  eventModalDate.value = defaultDate || (calendarComponent ? calendarComponent.formatDateISO(calendarComponent.selectedDate) : new Date().toISOString().split('T')[0]);
+  eventModalDate.value = targetDate;
   eventModalStartTime.value = '';
   eventModalEndTime.value = '';
   eventModalLocation.value = '';
   eventModalDescription.value = '';
+
+  // Asignar automáticamente un color diferente disponible en la misma fecha
+  const nextColor = getNextAvailableEventColor(targetDate, allEvents);
+  setSelectedEventColor(nextColor);
+
   dialogEventModal.showModal();
 }
 window.openEventModal = openEventModal;
+
+if (eventModalDate) {
+  eventModalDate.addEventListener('change', () => {
+    // Si es un nuevo evento, sugerir el siguiente color disponible al cambiar la fecha
+    if (!eventModalId.value && eventModalDate.value) {
+      const nextColor = getNextAvailableEventColor(eventModalDate.value, storage.getEvents());
+      setSelectedEventColor(nextColor);
+    }
+  });
+}
 
 const closeEventModal = () => dialogEventModal?.close();
 if (btnCloseEventModal) btnCloseEventModal.addEventListener('click', closeEventModal);
@@ -805,6 +864,7 @@ if (formEventModal) {
     if (!title || !date) return;
 
     const id = eventModalId.value;
+    const color = eventModalColor ? (eventModalColor.value || EVENT_COLORS[0]) : EVENT_COLORS[0];
     const eventData = {
       id: id || `event_manual_${Date.now()}`,
       title,
@@ -813,6 +873,7 @@ if (formEventModal) {
       end_time: eventModalEndTime.value || null,
       location: eventModalLocation.value.trim() || '',
       description: eventModalDescription.value.trim() || '',
+      color,
       created_at: new Date().toISOString()
     };
 
@@ -1191,6 +1252,7 @@ renderTasks();
 setTaskViewMode(currentTasksViewMode);
 renderNotes();
 renderHistory();
+renderColorPalette();
 
 // -------------------------------------------------------------
 // Registro del Service Worker (PWA)

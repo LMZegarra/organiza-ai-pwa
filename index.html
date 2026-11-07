@@ -270,6 +270,13 @@
             </div>
           </div>
 
+          <!-- Paleta de 10 colores para el evento -->
+          <div class="color-picker-group">
+            <label class="modal-label" id="labelEventColor">Color del evento (10 tonos básicos):</label>
+            <div class="event-color-palette" id="eventColorPalette" role="radiogroup" aria-labelledby="labelEventColor"></div>
+            <input type="hidden" id="eventModalColor" value="#0284c7" />
+          </div>
+
           <label class="modal-label" for="eventModalDescription">Notas adicionales (Opcional):</label>
           <input type="text" id="eventModalDescription" class="styled-input" placeholder="Detalles, recordatorios o preparativos..." />
 

@@ -64,8 +64,16 @@ export class CalendarComponent {
     const allEvents = storage.getEvents();
     const allTasks = storage.getTasks();
 
-    // Mapas de fechas con eventos y tareas
-    const eventsByDate = new Set(allEvents.map(e => e.date));
+    // Agrupar eventos por fecha para pintar cada puntito con su color correspondiente
+    const eventsByDateMap = new Map();
+    allEvents.forEach(ev => {
+      if (!ev.date) return;
+      if (!eventsByDateMap.has(ev.date)) {
+        eventsByDateMap.set(ev.date, []);
+      }
+      eventsByDateMap.get(ev.date).push(ev);
+    });
+
     const tasksByDate = new Set(allTasks.filter(t => t.due_date).map(t => t.due_date));
 
     // Cálculos de días del mes
@@ -89,15 +97,29 @@ export class CalendarComponent {
       const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const isToday = dateISO === todayISO ? 'today' : '';
       const isSelected = dateISO === selectedISO ? 'selected' : '';
-      const hasEvents = eventsByDate.has(dateISO);
+      const dayEvList = eventsByDateMap.get(dateISO) || [];
+      const hasEvents = dayEvList.length > 0;
       const hasTasks = tasksByDate.has(dateISO);
 
       let dotsHtml = '';
       if (hasEvents || hasTasks) {
+        let eventDotsHtml = '';
+        const maxDots = 3;
+        const visibleEvents = dayEvList.slice(0, maxDots);
+        visibleEvents.forEach(ev => {
+          const c = ev.color || '#0284c7';
+          eventDotsHtml += `<span class="dot dot-event" style="background-color: ${c};" data-color="${c}" title="${ev.title}"></span>`;
+        });
+        if (dayEvList.length > maxDots) {
+          eventDotsHtml += `<span class="dot-more" title="${dayEvList.length} eventos">+</span>`;
+        }
+
+        const taskDotHtml = hasTasks ? '<span class="dot dot-task" title="Tareas pendientes"></span>' : '';
+
         dotsHtml = `
           <div class="cal-dots">
-            ${hasEvents ? '<span class="dot dot-event" title="Eventos"></span>' : ''}
-            ${hasTasks ? '<span class="dot dot-task" title="Tareas"></span>' : ''}
+            ${eventDotsHtml}
+            ${taskDotHtml}
           </div>
         `;
       }
@@ -140,9 +162,13 @@ export class CalendarComponent {
         agendaHtml += `<h4 class="agenda-subtitle">📅 Eventos y Citas</h4><ul class="agenda-events-list">`;
         dayEvents.sort((a, b) => (a.start_time || '00:00').localeCompare(b.start_time || '00:00')).forEach(ev => {
           const timeLabel = ev.start_time ? (ev.end_time ? `${ev.start_time} - ${ev.end_time}` : `${ev.start_time}`) : 'Todo el día';
+          const evColor = ev.color || '#0284c7';
           agendaHtml += `
-            <li class="agenda-event-item">
-              <div class="event-time-badge">${timeLabel}</div>
+            <li class="agenda-event-item" style="border-left-color: ${evColor};">
+              <div class="event-time-badge" style="background-color: ${evColor}18; color: ${evColor}; border: 1px solid ${evColor}40;">
+                <span class="event-badge-dot" style="background-color: ${evColor};"></span>
+                ${timeLabel}
+              </div>
               <div class="event-details">
                 <strong>${ev.title}</strong>
                 ${ev.location ? `<div class="event-location">📍 ${ev.location}</div>` : ''}

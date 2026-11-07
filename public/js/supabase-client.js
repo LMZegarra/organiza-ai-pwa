@@ -175,6 +175,7 @@ export const SupabaseService = {
           end_time: e.end_time,
           location: e.location,
           description: e.description,
+          color: e.color || null,
           created_at: e.created_at
         })) : [],
         notes: notesRes.data ? notesRes.data.map(n => ({
@@ -237,10 +238,18 @@ export const SupabaseService = {
         description: event.description,
         updated_at: new Date().toISOString()
       };
+      if (event.color) {
+        payload.color = event.color;
+      }
       if (user) {
         payload.user_id = user.id;
       }
-      await client.from('organiza_events').upsert(payload);
+      const { error } = await client.from('organiza_events').upsert(payload);
+      if (error && payload.color) {
+        // Fallback si la columna color aún no existe en Supabase
+        delete payload.color;
+        await client.from('organiza_events').upsert(payload);
+      }
     } catch (e) {
       console.warn('Fallo syncEvent:', e);
     }

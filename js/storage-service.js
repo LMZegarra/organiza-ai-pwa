@@ -5,6 +5,30 @@
 
 import { SupabaseService } from './supabase-client.js';
 
+export const EVENT_PALETTE = [
+  { hex: '#0284c7', name: 'Azul Celeste' },
+  { hex: '#10b981', name: 'Verde Esmeralda' },
+  { hex: '#f59e0b', name: 'Ámbar Dorado' },
+  { hex: '#ef4444', name: 'Rojo Coral' },
+  { hex: '#8b5cf6', name: 'Violeta' },
+  { hex: '#ec4899', name: 'Rosa Fucsia' },
+  { hex: '#06b6d4', name: 'Cian Turquesa' },
+  { hex: '#84cc16', name: 'Verde Lima' },
+  { hex: '#6366f1', name: 'Azul Índigo' },
+  { hex: '#ea580c', name: 'Naranja Intenso' }
+];
+
+export const EVENT_COLORS = EVENT_PALETTE.map(c => c.hex);
+
+export function getNextAvailableEventColor(date, existingEvents = [], currentEventId = null) {
+  if (!date) return EVENT_COLORS[0];
+  const sameDateEvents = existingEvents.filter(e => e.date === date && e.id !== currentEventId);
+  const usedColors = new Set(sameDateEvents.map(e => (e.color || '').toLowerCase()).filter(Boolean));
+  const available = EVENT_COLORS.find(c => !usedColors.has(c.toLowerCase()));
+  if (available) return available;
+  return EVENT_COLORS[sameDateEvents.length % EVENT_COLORS.length];
+}
+
 const STORAGE_KEYS = {
   TASKS: 'organiza_local_tasks',
   EVENTS: 'organiza_local_events',
@@ -192,7 +216,13 @@ class StorageService {
   // ---- EVENTOS DE CALENDARIO ----
   getEvents() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS) || '[]');
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.EVENTS) || '[]');
+      return parsed.map((e, idx) => {
+        if (!e.color) {
+          e.color = EVENT_COLORS[idx % EVENT_COLORS.length];
+        }
+        return e;
+      });
     } catch {
       return [];
     }
@@ -200,6 +230,9 @@ class StorageService {
 
   saveEvent(event) {
     const events = this.getEvents();
+    if (!event.color) {
+      event.color = getNextAvailableEventColor(event.date, events, event.id);
+    }
     const existingIndex = events.findIndex(e => e.id === event.id);
     if (existingIndex >= 0) {
       events[existingIndex] = { ...events[existingIndex], ...event };
@@ -309,10 +342,12 @@ class StorageService {
       });
     }
 
-    // 2. Eventos de Calendario
+    // 2. Eventos de Calendario (colores distintos por día)
     if (Array.isArray(aiResult.calendar_events)) {
+      const allEvents = [...this.getEvents()];
       aiResult.calendar_events.forEach((e, i) => {
-        this.saveEvent({
+        const assignedColor = e.color || getNextAvailableEventColor(e.date, allEvents);
+        const eventObj = {
           id: `event_${timestamp}_${i}`,
           title: e.title,
           date: e.date,
@@ -320,8 +355,11 @@ class StorageService {
           end_time: e.end_time || null,
           location: e.location || '',
           description: e.description || '',
+          color: assignedColor,
           created_at: new Date().toISOString()
-        });
+        };
+        allEvents.push(eventObj);
+        this.saveEvent(eventObj);
       });
     }
 
