@@ -200,7 +200,10 @@ export class CalendarComponent {
               <span class="agenda-badge">Agenda Seleccionada</span>
               <h3 class="agenda-title">${selectedFormatted}</h3>
             </div>
-            <button id="btnAddManualEvent" class="btn btn-sm btn-outline">+ Evento</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button id="btnAddManualEvent" class="btn btn-sm btn-outline">+ Evento</button>
+              <button id="btnClearAllEvents" class="btn-link" style="font-size:0.75rem; color:var(--text-muted);">Vaciar agenda</button>
+            </div>
           </div>
           <div class="agenda-content">
             ${agendaHtml}
@@ -236,6 +239,13 @@ export class CalendarComponent {
           storage.deleteEvent(id);
         }
       });
+    });
+
+    // Vaciar todos los eventos de la agenda
+    this.container.querySelector('#btnClearAllEvents')?.addEventListener('click', () => {
+      if (confirm('¿Deseas vaciar todos los eventos del calendario?')) {
+        storage.clearAllEvents();
+      }
     });
 
     // Toggle tarea en agenda

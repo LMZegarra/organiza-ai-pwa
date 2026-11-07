@@ -206,12 +206,38 @@ class StorageService {
     SupabaseService.deleteEvent(id);
   }
 
+  clearAllEvents() {
+    localStorage.removeItem(STORAGE_KEYS.EVENTS);
+    this.notify();
+    const client = SupabaseService.getClient();
+    if (client) {
+      SupabaseService.getCurrentUser().then(user => {
+        if (user) {
+          client.from('organiza_events').delete().eq('user_id', user.id).then(() => {});
+        }
+      });
+    }
+  }
+
   // ---- NOTAS / IDEAS ----
   getNotes() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES) || '[]');
     } catch {
       return [];
+    }
+  }
+
+  clearAllNotes() {
+    localStorage.removeItem(STORAGE_KEYS.NOTES);
+    this.notify();
+    const client = SupabaseService.getClient();
+    if (client) {
+      SupabaseService.getCurrentUser().then(user => {
+        if (user) {
+          client.from('organiza_notes').delete().eq('user_id', user.id).then(() => {});
+        }
+      });
     }
   }
 

@@ -441,8 +441,7 @@ if (formNoteModal) {
 
 btnClearNotes.addEventListener('click', () => {
   if (confirm('¿Deseas vaciar todas las notas e ideas?')) {
-    localStorage.removeItem('organiza_local_notes');
-    storage.notify();
+    storage.clearAllNotes();
     showToast('🗑️ Todas las notas han sido eliminadas');
   }
 });
@@ -709,6 +708,15 @@ storage.subscribe(() => {
   renderHistory();
   updateSyncBadge();
 });
+
+// Limpieza automática única de ideas y eventos de prueba anteriores solicitada
+const CLEANUP_KEY = 'organiza_cleanup_old_tests_v1';
+if (!localStorage.getItem(CLEANUP_KEY)) {
+  storage.clearAllEvents();
+  storage.clearAllNotes();
+  localStorage.setItem(CLEANUP_KEY, 'true');
+  console.log('[Cleanup] Eventos e ideas de prueba antiguos eliminados.');
+}
 
 // Carga Inicial
 updateSyncBadge();
