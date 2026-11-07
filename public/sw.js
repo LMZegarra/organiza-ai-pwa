@@ -3,18 +3,18 @@
  * Estrategia: Cache-First para recursos estáticos y Network-First para APIs
  */
 
-const CACHE_NAME = 'organiza-ai-cache-v1';
+const CACHE_NAME = 'organiza-ai-cache-v2';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/manifest.json',
-  '/icon.svg',
-  '/js/ai-service.js',
-  '/js/storage-service.js',
-  '/js/supabase-client.js',
-  '/js/calendar-component.js'
+  './',
+  'index.html',
+  'style.css',
+  'app.js',
+  'manifest.json',
+  'icon.svg',
+  'js/ai-service.js',
+  'js/storage-service.js',
+  'js/supabase-client.js',
+  'js/calendar-component.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
 
   // No interceptar peticiones a la API del servidor ni a Supabase/OpenRouter/Google
   if (
-    url.pathname.startsWith('/api/') ||
+    url.pathname.includes('/api/') ||
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('openrouter.ai') ||
     url.hostname.includes('googleapis.com')
@@ -63,7 +63,6 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
       return fetch(event.request).then((networkResponse) => {
-        // Guardar copia en caché si es recurso válido
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -72,9 +71,8 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Fallback offline a index.html para navegación SPA
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return caches.match('./index.html') || caches.match('index.html');
         }
       });
     })
