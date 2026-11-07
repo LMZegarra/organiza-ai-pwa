@@ -140,31 +140,54 @@ REGLAS ESTRICTAS DE EXTRACCIÓN:
       throw new Error('El texto no puede estar vacío');
     }
 
-    const customKey = localStorage.getItem('custom_openrouter_key')?.trim();
-    const apiKey = customKey || APP_CONFIG.DEFAULT_OPENROUTER_KEY;
+    // Prioridad de credencial:
+    // 1. Clave personal del usuario (si la agregó en Ajustes)
+    // 2. Clave por defecto de la app (servidor Vercel o config.local.js)
+    const customKey = localStorage.getItem('custom_openrouter_key')?.trim() || '';
+    const apiKey = customKey || APP_CONFIG.DEFAULT_OPENROUTER_KEY || '';
     const model = APP_CONFIG.DEFAULT_OPENROUTER_MODEL || 'openrouter/free';
     const currentDate = new Date().toISOString().slice(0, 10);
 
-    if (!apiKey) {
-      throw new Error('No hay una API Key de OpenRouter configurada. Puedes agregar tu clave personal en Ajustes (⚙️).');
-    }
-
-    // 1. Intentar llamar al backend local (si existe)
+    // 1. Intentar llamar al backend (/api/organize-text en Vercel Serverless o Express local)
+    // El servidor tiene configurada la variable OPENROUTER_API_KEY de forma segura
     try {
       const response = await fetch('/api/organize-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.trim(), provider: 'openrouter', apiKey, model, currentDate })
+        body: JSON.stringify({
+          text: text.trim(),
+          provider: 'openrouter',
+          apiKey: customKey || undefined,
+          model,
+          currentDate
+        })
       });
 
       if (response.ok) {
         return await response.json();
       }
-    } catch {
-      // Backend no disponible (modo static GitHub Pages / Vercel)
+
+      // Si el servidor respondió con un error específico (por ejemplo 400 o 500)
+      if (response.status !== 404) {
+        const errJson = await response.json().catch(() => null);
+        if (errJson?.error) {
+          throw new Error(errJson.error);
+        }
+      }
+    } catch (err) {
+      // Si el error provino directamente del servidor con un mensaje explícito, mostrarlo
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
+        throw err;
+      }
+      console.warn('[AIService] Backend /api/organize-text no disponible, intentando fallback directo:', err.message);
     }
 
-    // 2. Llamada directa a OpenRouter desde el navegador (Serverless)
-    return await this.directOpenRouter(apiKey, text.trim(), model, currentDate);
+    // 2. Fallback: Llamada directa a OpenRouter desde el navegador (para GitHub Pages estático o local)
+    if (apiKey) {
+      return await this.directOpenRouter(apiKey, text.trim(), model, currentDate);
+    }
+
+    // 3. Si el servidor no estuvo disponible y no hay clave en el cliente
+    throw new Error('No se pudo contactar al servidor y no hay una API Key de OpenRouter configurada en el dispositivo. Puedes agregar tu clave personal en Ajustes (⚙️).');
   }
 }
