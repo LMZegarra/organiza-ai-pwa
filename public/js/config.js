@@ -1,30 +1,27 @@
 /**
  * config.js
- * Configuración central y credenciales de OrganizaAI.
- * 
- * Si existe config.local.js (ignorado por Git por seguridad), se cargan sus valores.
- * Si no, usa los valores por defecto.
+ * Configuración central y credenciales por defecto de OrganizaAI.
  */
 
 let localConfig = {};
 try {
-  // Intentar cargar credenciales locales privadas si existen
+  // Intentar cargar credenciales privadas si existen (config.local.js ignorado en Git)
   const localModule = await import('./config.local.js');
   localConfig = localModule.LOCAL_CONFIG || {};
 } catch {
-  // No hay config.local.js, se usan los valores base
+  // Sin config.local.js
 }
 
 export const APP_CONFIG = {
-  // Supabase (Sincronización en la nube en tiempo real)
-  SUPABASE_URL: localConfig.SUPABASE_URL || 'https://xyzcompany.supabase.co',
-  SUPABASE_ANON_KEY: localConfig.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  // Supabase (Proyecto en la nube activo)
+  SUPABASE_URL: localConfig.SUPABASE_URL || 'https://vhxprfbexizxpllaqeqk.supabase.co',
+  SUPABASE_ANON_KEY: localConfig.SUPABASE_ANON_KEY || 'sb_publishable_F2dl38sLX9IfudFb6xK-jA_FpzBTWsQ',
 
-  // OpenRouter (IA por defecto)
+  // OpenRouter (Credencial por defecto: desde config.local.js o servidor)
   DEFAULT_OPENROUTER_KEY: localConfig.OPENROUTER_API_KEY || '',
   DEFAULT_OPENROUTER_MODEL: localConfig.OPENROUTER_MODEL || 'openrouter/free',
 
-  // Modelos gratuitos de respaldo
+  // Modelos verificados
   FALLBACK_MODELS: [
     'openrouter/free',
     'google/gemini-2.0-flash-exp:free',
