@@ -54,9 +54,15 @@ let noteSearchQuery = '';
 const historyListElement = document.getElementById('historyListElement');
 const btnClearHistory = document.getElementById('btnClearHistory');
 
-// Dialog Ajustes
+// Dialog Unificado de Ajustes y Cuenta
 const dialogSettings = document.getElementById('dialogSettings');
 const btnSettings = document.getElementById('btnSettings');
+const settingsBtnLabel = document.getElementById('settingsBtnLabel');
+const tabSettingsGeneral = document.getElementById('tabSettingsGeneral');
+const tabSettingsAccount = document.getElementById('tabSettingsAccount');
+const settingsGeneralPane = document.getElementById('settingsGeneralPane');
+const settingsAccountPane = document.getElementById('settingsAccountPane');
+const accountTabBadge = document.getElementById('accountTabBadge');
 const btnCloseModal = document.getElementById('btnCloseModal');
 const btnDismissModal = document.getElementById('btnDismissModal');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
@@ -86,10 +92,16 @@ const noteModalContent = document.getElementById('noteModalContent');
 const btnCloseNoteModal = document.getElementById('btnCloseNoteModal');
 const btnDismissNoteModal = document.getElementById('btnDismissNoteModal');
 
-// Auth Header y Modal Supabase Auth
+// Auth y Cuenta (Supabase Auth)
 const btnAuthHeader = document.getElementById('btnAuthHeader');
-const authBtnText = document.getElementById('authBtnText');
-const dialogAuthModal = document.getElementById('dialogAuthModal');
+const authBtnText = document.getElementById('authBtnText') || settingsBtnLabel;
+const dialogAuthModal = document.getElementById('dialogAuthModal') || {
+  showModal: () => {
+    switchSettingsTab('account');
+    dialogSettings.showModal();
+  },
+  close: () => dialogSettings.close()
+};
 const btnCloseAuthModal = document.getElementById('btnCloseAuthModal');
 const authProfileSection = document.getElementById('authProfileSection');
 const userEmailDisplay = document.getElementById('userEmailDisplay');
@@ -139,10 +151,10 @@ if (calendarMount) {
 function updateSyncBadge() {
   if (activeUser && SupabaseService.isConfigured()) {
     syncBadge.className = 'sync-badge synced';
-    syncText.textContent = 'En línea (Nube)';
+    syncText.textContent = 'EN LINEA';
   } else {
     syncBadge.className = 'sync-badge local';
-    syncText.textContent = 'Local (Offline)';
+    syncText.textContent = 'LOCAL';
   }
 }
 
@@ -778,8 +790,31 @@ function loadSettingsIntoDialog() {
   }
 }
 
+// Alternar Pestañas del Modal Unificado de Ajustes y Cuenta
+function switchSettingsTab(tabName) {
+  if (tabName === 'account') {
+    tabSettingsAccount?.classList.add('active');
+    tabSettingsGeneral?.classList.remove('active');
+    tabSettingsAccount?.setAttribute('aria-selected', 'true');
+    tabSettingsGeneral?.setAttribute('aria-selected', 'false');
+    settingsAccountPane?.classList.remove('hidden');
+    settingsGeneralPane?.classList.add('hidden');
+  } else {
+    tabSettingsGeneral?.classList.add('active');
+    tabSettingsAccount?.classList.remove('active');
+    tabSettingsGeneral?.setAttribute('aria-selected', 'true');
+    tabSettingsAccount?.setAttribute('aria-selected', 'false');
+    settingsGeneralPane?.classList.remove('hidden');
+    settingsAccountPane?.classList.add('hidden');
+  }
+}
+
+if (tabSettingsGeneral) tabSettingsGeneral.addEventListener('click', () => switchSettingsTab('general'));
+if (tabSettingsAccount) tabSettingsAccount.addEventListener('click', () => switchSettingsTab('account'));
+
 btnSettings.addEventListener('click', () => {
   loadSettingsIntoDialog();
+  clearAuthAlert();
   dialogSettings.showModal();
 });
 
@@ -787,8 +822,11 @@ const closeSettingsDialog = () => {
   dialogSettings.close();
 };
 
-btnCloseModal.addEventListener('click', closeSettingsDialog);
-btnDismissModal.addEventListener('click', closeSettingsDialog);
+const closeAuthModal = closeSettingsDialog;
+
+if (btnCloseModal) btnCloseModal.addEventListener('click', closeSettingsDialog);
+if (btnDismissModal) btnDismissModal.addEventListener('click', closeSettingsDialog);
+if (btnDismissAuthProfile) btnDismissAuthProfile.addEventListener('click', closeSettingsDialog);
 
 btnSaveSettings.addEventListener('click', () => {
   const customKey = inputCustomOpenRouterKey.value.trim();
@@ -825,29 +863,37 @@ function updateAuthUI(user) {
   updateSyncBadge();
 
   if (user && user.email) {
-    authBtnText.textContent = user.email.split('@')[0];
-    userEmailDisplay.textContent = user.email;
-    authProfileSection.classList.remove('hidden');
-    authFormSection.classList.add('hidden');
+    const shortName = user.email.split('@')[0];
+    if (settingsBtnLabel) settingsBtnLabel.textContent = shortName;
+    if (btnSettings) btnSettings.title = `Ajustes y Cuenta (${user.email})`;
+    if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+    if (accountTabBadge) {
+      accountTabBadge.textContent = '● Conectado';
+      accountTabBadge.className = 'account-tab-badge connected';
+    }
+    authProfileSection?.classList.remove('hidden');
+    authFormSection?.classList.add('hidden');
   } else {
-    authBtnText.textContent = 'Acceder';
-    userEmailDisplay.textContent = '';
-    authProfileSection.classList.add('hidden');
-    authFormSection.classList.remove('hidden');
+    if (settingsBtnLabel) settingsBtnLabel.textContent = 'Ajustes';
+    if (btnSettings) btnSettings.title = 'Ajustes y Cuenta';
+    if (userEmailDisplay) userEmailDisplay.textContent = '';
+    if (accountTabBadge) {
+      accountTabBadge.textContent = '● Local';
+      accountTabBadge.className = 'account-tab-badge';
+    }
+    authProfileSection?.classList.add('hidden');
+    authFormSection?.classList.remove('hidden');
   }
 }
 
-// Abrir modal de Auth
+// Abrir modal unificado en pestaña de Cuenta (retrocompatibilidad)
 if (btnAuthHeader) {
   btnAuthHeader.addEventListener('click', () => {
+    switchSettingsTab('account');
     clearAuthAlert();
-    dialogAuthModal.showModal();
+    dialogSettings.showModal();
   });
 }
-
-const closeAuthModal = () => dialogAuthModal.close();
-if (btnCloseAuthModal) btnCloseAuthModal.addEventListener('click', closeAuthModal);
-if (btnDismissAuthProfile) btnDismissAuthProfile.addEventListener('click', closeAuthModal);
 
 // Alternar pestañas Login / Signup
 if (tabAuthLogin && tabAuthSignup) {
