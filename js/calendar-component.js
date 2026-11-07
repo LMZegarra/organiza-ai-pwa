@@ -174,27 +174,29 @@ export class CalendarComponent {
     // Renderizado completo
     this.container.innerHTML = `
       <div class="calendar-wrapper">
-        <!-- Cabecera del Calendario -->
-        <div class="calendar-header">
-          <button id="btnPrevMonth" class="cal-nav-btn" aria-label="Mes anterior">&larr;</button>
-          <div class="cal-title-group">
-            <h3 class="calendar-title">${monthTitle}</h3>
-            <button id="btnCalToday" class="cal-today-btn">Hoy</button>
+        <!-- Panel del Mes (Izquierda en Desktop) -->
+        <div class="calendar-month-pane">
+          <div class="calendar-header">
+            <button id="btnPrevMonth" class="cal-nav-btn" aria-label="Mes anterior">&larr;</button>
+            <div class="cal-title-group">
+              <h3 class="calendar-title">${monthTitle}</h3>
+              <button id="btnCalToday" class="cal-today-btn">Hoy</button>
+            </div>
+            <button id="btnNextMonth" class="cal-nav-btn" aria-label="Mes siguiente">&rarr;</button>
           </div>
-          <button id="btnNextMonth" class="cal-nav-btn" aria-label="Mes siguiente">&rarr;</button>
+
+          <!-- Días de la semana -->
+          <div class="cal-weekdays">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+          </div>
+
+          <!-- Grilla mensual -->
+          <div class="cal-grid">
+            ${daysHtml}
+          </div>
         </div>
 
-        <!-- Días de la semana -->
-        <div class="cal-weekdays">
-          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
-        </div>
-
-        <!-- Grilla mensual -->
-        <div class="cal-grid">
-          ${daysHtml}
-        </div>
-
-        <!-- Agenda del día seleccionado -->
+        <!-- Agenda del día seleccionado (Derecha en Desktop) -->
         <div class="agenda-section">
           <div class="agenda-header">
             <div>

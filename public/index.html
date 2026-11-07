@@ -297,35 +297,39 @@
       <!-- VISTA 2: Lista de Tareas y Filtros -->
       <section id="viewTasks" class="view-panel">
         <div class="tasks-toolbar">
-          <!-- Conmutador de modo de vista: Lista vs Kanban -->
-          <div class="tasks-view-mode-toggle" role="group" aria-label="Modo de vista">
-            <button id="btnViewList" class="btn-mode-toggle active" type="button" title="Vista de lista">📋 Lista</button>
-            <button id="btnViewKanban" class="btn-mode-toggle" type="button" title="Vista de tablero Kanban">🗂️ Kanban</button>
+          <div class="toolbar-primary-row">
+            <!-- Conmutador de modo de vista: Lista vs Kanban -->
+            <div class="tasks-view-mode-toggle" role="group" aria-label="Modo de vista">
+              <button id="btnViewList" class="btn-mode-toggle active" type="button" title="Vista de lista">📋 Lista</button>
+              <button id="btnViewKanban" class="btn-mode-toggle" type="button" title="Vista de tablero Kanban">🗂️ Kanban</button>
+            </div>
+            <div class="toolbar-actions">
+              <button id="btnQuickAddTask" class="btn btn-sm btn-outline">+ Tarea Manual</button>
+              <button id="btnClearAllTasks" class="btn-link" style="font-size:0.75rem; color:var(--text-muted);">Vaciar</button>
+            </div>
           </div>
 
-          <div class="filter-group">
-            <label class="filter-label" for="selectCategoryFilter">Categoría:</label>
-            <select id="selectCategoryFilter" class="filter-select">
-              <option value="all">Todas</option>
-              <option value="Trabajo">💼 Trabajo</option>
-              <option value="Personal">🏠 Personal</option>
-              <option value="Compras">🛒 Compras</option>
-              <option value="Estudio">📚 Estudio</option>
-              <option value="Salud">💊 Salud</option>
-              <option value="General">📌 General</option>
-            </select>
-          </div>
-          <div class="filter-group" id="filterStatusGroup">
-            <label class="filter-label" for="selectStatusFilter">Estado:</label>
-            <select id="selectStatusFilter" class="filter-select">
-              <option value="pending">Pendientes</option>
-              <option value="completed">Completadas</option>
-              <option value="all">Todas</option>
-            </select>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button id="btnQuickAddTask" class="btn btn-sm btn-outline">+ Tarea Manual</button>
-            <button id="btnClearAllTasks" class="btn-link" style="font-size:0.75rem; color:var(--text-muted);">Vaciar tareas</button>
+          <div class="toolbar-filters-row">
+            <div class="filter-group">
+              <label class="filter-label" for="selectCategoryFilter">Categoría:</label>
+              <select id="selectCategoryFilter" class="filter-select">
+                <option value="all">Todas</option>
+                <option value="Trabajo">💼 Trabajo</option>
+                <option value="Personal">🏠 Personal</option>
+                <option value="Compras">🛒 Compras</option>
+                <option value="Estudio">📚 Estudio</option>
+                <option value="Salud">💊 Salud</option>
+                <option value="General">📌 General</option>
+              </select>
+            </div>
+            <div class="filter-group" id="filterStatusGroup">
+              <label class="filter-label" for="selectStatusFilter">Estado:</label>
+              <select id="selectStatusFilter" class="filter-select">
+                <option value="pending">⏳ Pendientes</option>
+                <option value="completed">✅ Completadas</option>
+                <option value="all">Todas</option>
+              </select>
+            </div>
           </div>
         </div>
 

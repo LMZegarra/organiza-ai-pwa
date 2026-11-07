@@ -85,12 +85,13 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 680px;
+  max-width: 1380px;
   min-height: 100vh;
-  padding: 16px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  margin: 0 auto;
 }
 
 /* Header */
@@ -98,7 +99,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .logo-area {
@@ -397,10 +399,27 @@ h1 {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.calendar-month-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 920px) {
+  .calendar-wrapper {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 28px;
+    align-items: start;
+    padding: 24px;
+  }
 }
 
 .calendar-header {
@@ -539,6 +558,17 @@ h1 {
   gap: 12px;
 }
 
+@media (min-width: 920px) {
+  .agenda-section {
+    border-top: none;
+    border-left: 1px solid var(--border);
+    padding-top: 0;
+    padding-left: 24px;
+    position: sticky;
+    top: 20px;
+  }
+}
+
 .agenda-header {
   display: flex;
   justify-content: space-between;
@@ -654,15 +684,27 @@ h1 {
 /* ---- TAREAS LIST & TOOLBAR ---- */
 .tasks-toolbar {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 12px;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 10px;
+  padding: 12px 14px;
   box-shadow: var(--shadow-soft);
+}
+
+.toolbar-primary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Conmutador de Vistas (Lista / Kanban) */
@@ -679,9 +721,9 @@ h1 {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 6px 14px;
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s;
@@ -693,25 +735,69 @@ h1 {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
+.toolbar-filters-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
 .filter-group {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .filter-label {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
 .filter-select {
+  width: 100%;
+  min-height: 40px;
   background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--text-main);
-  padding: 5px 8px;
+  padding: 8px 12px;
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  border-color: var(--primary);
+}
+
+@media (min-width: 820px) {
+  .tasks-toolbar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+  }
+  .toolbar-primary-row {
+    flex: 0 0 auto;
+    gap: 16px;
+  }
+  .toolbar-filters-row {
+    display: flex;
+    align-items: center;
+    width: auto;
+    gap: 16px;
+  }
+  .filter-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .filter-select {
+    width: auto;
+    min-width: 160px;
+  }
 }
 
 .tasks-list {
@@ -813,23 +899,53 @@ h1 {
 /* ---- TABLERO KANBAN ---- */
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
   align-items: start;
   width: 100%;
+}
+
+@media (min-width: 900px) {
+  .kanban-board {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-board {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+    padding: 4px 2px 14px 2px;
+    scrollbar-width: thin;
+  }
 }
 
 .kanban-column {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-height: 280px;
   box-shadow: var(--shadow-soft);
   transition: border-color 0.2s;
+}
+
+@media (max-width: 768px) {
+  .kanban-column {
+    flex: 0 0 85%;
+    min-width: 280px;
+    max-width: 340px;
+    scroll-snap-align: center;
+    scroll-snap-stop: normal;
+  }
 }
 
 .kanban-col-header {
@@ -1473,18 +1589,121 @@ dialog::backdrop {
   display: none !important;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .app-container {
-    padding: 12px;
+    padding: 12px 14px;
+    gap: 14px;
   }
-  .cal-day {
-    font-size: 0.78rem;
+
+  .header {
+    padding-bottom: 8px;
   }
-  .view-tab {
+
+  .logo-icon {
+    font-size: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.15rem;
+  }
+
+  .subtitle {
+    font-size: 0.72rem;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .sync-badge {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .auth-header-btn {
+    padding: 4px 8px;
     font-size: 0.75rem;
-    padding: 4px;
   }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .smart-textarea {
+    min-height: 80px;
+    padding: 10px;
+    font-size: 0.92rem;
+  }
+
+  .view-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .view-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .view-tab {
+    min-height: 42px;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+
+  .cal-grid {
+    gap: 4px;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    font-size: 0.85rem;
+    min-height: 38px;
+    padding: 2px;
+  }
+
+  .task-card {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .task-chk {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .task-text {
+    font-size: 0.92rem;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .task-meta {
+    gap: 6px;
+    font-size: 0.74rem;
+  }
+
+  .category-tag, .task-priority {
+    padding: 3px 8px;
+    font-size: 0.72rem;
+  }
+
   .form-row-2 {
     grid-template-columns: 1fr;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dialog-inner {
+    padding: 16px;
+    gap: 14px;
   }
 }
