@@ -235,6 +235,67 @@
       </div>
     </dialog>
 
+    <!-- Modal para Crear / Editar Eventos y Citas del Calendario -->
+    <dialog id="dialogEventModal" class="modal-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h3 id="eventModalHeading">📅 Evento o Cita</h3>
+          <button id="btnCloseEventModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
+        </div>
+        <form id="formEventModal" class="modal-form">
+          <input type="hidden" id="eventModalId" />
+
+          <label class="modal-label" for="eventModalTitle">Título o motivo del evento:</label>
+          <input type="text" id="eventModalTitle" class="styled-input" placeholder="Ej. Cita con el dentista, Reunión Zoom..." required />
+
+          <div class="form-row-2">
+            <div>
+              <label class="modal-label" for="eventModalDate">Fecha:</label>
+              <input type="date" id="eventModalDate" class="styled-input" required />
+            </div>
+            <div>
+              <label class="modal-label" for="eventModalStartTime">Hora de inicio:</label>
+              <input type="time" id="eventModalStartTime" class="styled-input" />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div>
+              <label class="modal-label" for="eventModalEndTime">Hora de fin (Opcional):</label>
+              <input type="time" id="eventModalEndTime" class="styled-input" />
+            </div>
+            <div>
+              <label class="modal-label" for="eventModalLocation">Lugar o Enlace (Opcional):</label>
+              <input type="text" id="eventModalLocation" class="styled-input" placeholder="Ej. Consultorio 302, Meet..." />
+            </div>
+          </div>
+
+          <label class="modal-label" for="eventModalDescription">Notas adicionales (Opcional):</label>
+          <input type="text" id="eventModalDescription" class="styled-input" placeholder="Detalles, recordatorios o preparativos..." />
+
+          <div class="dialog-actions" style="margin-top:16px;">
+            <button id="btnSaveEventModal" class="btn btn-primary" type="submit">Guardar Evento</button>
+            <button id="btnDismissEventModal" class="btn btn-secondary" type="button">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Modal Nativo de Confirmación con Alto Contraste -->
+    <dialog id="dialogConfirmModal" class="modal-dialog confirm-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h3 id="confirmModalHeading">⚠️ Confirmación</h3>
+          <button id="btnCloseConfirmModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
+        </div>
+        <p id="confirmModalMessage" class="confirm-modal-message">¿Estás seguro de realizar esta acción?</p>
+        <div class="dialog-actions" style="margin-top:14px;">
+          <button id="btnConfirmAction" class="btn btn-danger" type="button">Eliminar</button>
+          <button id="btnCancelConfirm" class="btn btn-secondary" type="button">Cancelar</button>
+        </div>
+      </div>
+    </dialog>
+
     <!-- Área de Entrada de Texto Inteligente -->
     <section class="input-card" id="inputCardSection">
       <form id="organizeForm" class="organize-form">

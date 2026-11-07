@@ -148,7 +148,10 @@ export class CalendarComponent {
                 ${ev.location ? `<div class="event-location">📍 ${ev.location}</div>` : ''}
                 ${ev.description ? `<p class="event-desc">${ev.description}</p>` : ''}
               </div>
-              <button class="btn-icon-danger btn-delete-event" data-id="${ev.id}" title="Eliminar evento">🗑️</button>
+              <div class="event-actions" style="display:flex; align-items:center; gap:4px;">
+                <button class="btn-icon-action btn-edit-event" data-id="${ev.id}" title="Editar evento">✏️</button>
+                <button class="btn-icon-danger btn-delete-event" data-id="${ev.id}" title="Eliminar evento">🗑️</button>
+              </div>
             </li>
           `;
         });
@@ -234,20 +237,44 @@ export class CalendarComponent {
       });
     });
 
-    // Eliminar evento
-    this.container.querySelectorAll('.btn-delete-event').forEach(btn => {
+    // Editar evento desde la agenda
+    this.container.querySelectorAll('.btn-edit-event').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = e.currentTarget.dataset.id;
-        if (confirm('¿Deseas eliminar este evento?')) {
-          storage.deleteEvent(id);
+        if (window.openEventModal) {
+          window.openEventModal(id);
         }
       });
     });
 
-    // Vaciar todos los eventos de la agenda
+    // Eliminar evento con diálogo estilizado
+    this.container.querySelectorAll('.btn-delete-event').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        const doDelete = () => {
+          storage.deleteEvent(id);
+          if (window.showToast) window.showToast('🗑️ Evento eliminado', 3000);
+        };
+
+        if (window.showConfirmDialog) {
+          window.showConfirmDialog('🗑️ Eliminar Evento', '¿Deseas eliminar este evento del calendario?', 'Eliminar', doDelete);
+        } else if (confirm('¿Deseas eliminar este evento?')) {
+          doDelete();
+        }
+      });
+    });
+
+    // Vaciar todos los eventos de la agenda con diálogo estilizado
     this.container.querySelector('#btnClearAllEvents')?.addEventListener('click', () => {
-      if (confirm('¿Deseas vaciar todos los eventos del calendario?')) {
+      const doClear = () => {
         storage.clearAllEvents();
+        if (window.showToast) window.showToast('🗑️ Todos los eventos han sido eliminados', 3000);
+      };
+
+      if (window.showConfirmDialog) {
+        window.showConfirmDialog('🗑️ Vaciar Calendario', '¿Deseas vaciar todos los eventos del calendario?', 'Vaciar Todo', doClear);
+      } else if (confirm('¿Deseas vaciar todos los eventos del calendario?')) {
+        doClear();
       }
     });
 
@@ -259,32 +286,27 @@ export class CalendarComponent {
       });
     });
 
-    // Eliminar tarea desde la agenda
+    // Eliminar tarea desde la agenda con diálogo estilizado
     this.container.querySelectorAll('.btn-delete-agenda-task').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = e.currentTarget.dataset.id;
-        if (confirm('¿Deseas eliminar esta tarea?')) {
+        const doDeleteTask = () => {
           storage.deleteTask(id);
+          if (window.showToast) window.showToast('🗑️ Tarea eliminada', 3000);
+        };
+
+        if (window.showConfirmDialog) {
+          window.showConfirmDialog('🗑️ Eliminar Tarea', '¿Deseas eliminar esta tarea?', 'Eliminar', doDeleteTask);
+        } else if (confirm('¿Deseas eliminar esta tarea?')) {
+          doDeleteTask();
         }
       });
     });
 
-    // Añadir evento manual
+    // Añadir evento con modal nativo de alto contraste
     this.container.querySelector('#btnAddManualEvent')?.addEventListener('click', () => {
-      const title = prompt('Nombre o descripción del evento:');
-      if (title && title.trim()) {
-        const time = prompt('Hora de inicio (ej. 15:30) o dejar en blanco:', '');
-        const dateISO = this.formatDateISO(this.selectedDate);
-        storage.saveEvent({
-          id: `event_manual_${Date.now()}`,
-          title: title.trim(),
-          date: dateISO,
-          start_time: time && /^\d{2}:\d{2}$/.test(time.trim()) ? time.trim() : null,
-          end_time: null,
-          location: '',
-          description: '',
-          created_at: new Date().toISOString()
-        });
+      if (window.openEventModal) {
+        window.openEventModal(null, this.formatDateISO(this.selectedDate));
       }
     });
   }

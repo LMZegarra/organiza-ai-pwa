@@ -1609,33 +1609,80 @@ dialog::backdrop {
   align-items: center;
 }
 
-/* Toast de Feedback Táctil */
+/* Notificación en Esquina Superior (Toast Elegante) */
 .toast-notification {
   position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
+  top: 20px;
+  right: 20px;
+  transform: translateY(-16px) scale(0.96);
   background: var(--card-bg);
   color: var(--text-main);
-  border: 1px solid var(--primary);
-  padding: 10px 20px;
-  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  border-left: 4px solid var(--primary);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
   box-shadow: var(--shadow-card-hover);
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.86rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 10px;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 1000;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2100;
+  max-width: 380px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .toast-notification.show {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0) scale(1);
   opacity: 1;
   pointer-events: auto;
+}
+
+.toast-notification.success {
+  border-left-color: var(--success);
+}
+
+.toast-notification.warning {
+  border-left-color: var(--warning);
+}
+
+.toast-notification.error {
+  border-left-color: var(--danger);
+}
+
+.toast-msg {
+  flex: 1;
+  line-height: 1.35;
+}
+
+.toast-close {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  color: var(--text-main);
+}
+
+/* Modal de Confirmación Estilizado */
+dialog.modal-dialog.confirm-dialog {
+  max-width: 420px;
+}
+
+.confirm-modal-message {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  padding: 6px 0;
 }
 
 /* ---- AUTENTICACIÓN & PERFIL DE USUARIO ---- */
@@ -1905,9 +1952,19 @@ dialog::backdrop {
     color: var(--primary);
   }
 
-  /* Posición de Toast por encima de la barra inferior */
+  /* Posición de Toast en esquina superior en móviles */
   .toast-notification {
-    bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: 12px;
+    bottom: auto;
+    max-width: calc(100vw - 24px);
+    font-size: 0.82rem;
+    padding: 9px 14px;
+    transform: translateY(-12px) scale(0.96);
+  }
+
+  .toast-notification.show {
+    transform: translateY(0) scale(1);
   }
 
   .cal-grid {

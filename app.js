@@ -92,6 +92,28 @@ const noteModalContent = document.getElementById('noteModalContent');
 const btnCloseNoteModal = document.getElementById('btnCloseNoteModal');
 const btnDismissNoteModal = document.getElementById('btnDismissNoteModal');
 
+// Dialog Evento Modal
+const dialogEventModal = document.getElementById('dialogEventModal');
+const eventModalHeading = document.getElementById('eventModalHeading');
+const formEventModal = document.getElementById('formEventModal');
+const eventModalId = document.getElementById('eventModalId');
+const eventModalTitle = document.getElementById('eventModalTitle');
+const eventModalDate = document.getElementById('eventModalDate');
+const eventModalStartTime = document.getElementById('eventModalStartTime');
+const eventModalEndTime = document.getElementById('eventModalEndTime');
+const eventModalLocation = document.getElementById('eventModalLocation');
+const eventModalDescription = document.getElementById('eventModalDescription');
+const btnCloseEventModal = document.getElementById('btnCloseEventModal');
+const btnDismissEventModal = document.getElementById('btnDismissEventModal');
+
+// Dialog Confirmación Estilizado
+const dialogConfirmModal = document.getElementById('dialogConfirmModal');
+const confirmModalHeading = document.getElementById('confirmModalHeading');
+const confirmModalMessage = document.getElementById('confirmModalMessage');
+const btnConfirmAction = document.getElementById('btnConfirmAction');
+const btnCancelConfirm = document.getElementById('btnCancelConfirm');
+const btnCloseConfirmModal = document.getElementById('btnCloseConfirmModal');
+
 // Auth y Cuenta (Supabase Auth)
 const btnAuthHeader = document.getElementById('btnAuthHeader');
 const authBtnText = document.getElementById('authBtnText') || settingsBtnLabel;
@@ -120,22 +142,56 @@ const btnMagicLink = document.getElementById('btnMagicLink');
 let authMode = 'login';
 let activeUser = null;
 
-// Feedback Táctil (Toast)
-function showToast(message, duration = 2400) {
+// Feedback Visual y Notificaciones en Esquina Superior
+function showToast(message, duration = 3000, type = 'info') {
   let toast = document.getElementById('toastNotification');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'toastNotification';
     toast.className = 'toast-notification';
     document.body.appendChild(toast);
+    toast.addEventListener('click', () => {
+      toast.classList.remove('show');
+    });
   }
-  toast.textContent = message;
+  toast.className = `toast-notification ${type}`;
+  toast.innerHTML = `<span class="toast-msg">${message}</span><span class="toast-close" title="Cerrar">&times;</span>`;
   toast.classList.add('show');
   clearTimeout(toast._timeout);
   toast._timeout = setTimeout(() => {
     toast.classList.remove('show');
   }, duration);
 }
+window.showToast = showToast;
+
+// Diálogo de Confirmación Reutilizable con Alto Contraste (reemplazo de confirm)
+function showConfirmDialog(heading, message, confirmBtnText = 'Eliminar', onConfirm) {
+  if (!dialogConfirmModal) {
+    if (confirm(message)) onConfirm();
+    return;
+  }
+
+  confirmModalHeading.textContent = heading || '⚠️ Confirmación';
+  confirmModalMessage.textContent = message;
+  btnConfirmAction.textContent = confirmBtnText;
+
+  const cleanup = () => {
+    btnConfirmAction.onclick = null;
+    btnCancelConfirm.onclick = null;
+    btnCloseConfirmModal.onclick = null;
+    dialogConfirmModal.close();
+  };
+
+  btnConfirmAction.onclick = () => {
+    cleanup();
+    if (onConfirm) onConfirm();
+  };
+  btnCancelConfirm.onclick = cleanup;
+  btnCloseConfirmModal.onclick = cleanup;
+
+  dialogConfirmModal.showModal();
+}
+window.showConfirmDialog = showConfirmDialog;
 
 // Inicializar Calendario
 const calendarMount = document.getElementById('calendarMount');
@@ -243,7 +299,7 @@ organizeForm.addEventListener('submit', async (e) => {
 
     inputText.value = '';
     inputCardSection?.classList.remove('expanded');
-    alert('✨ ¡Organizado con éxito! Revisa tu calendario y lista de tareas.');
+    showToast('✨ ¡Organizado con éxito! Revisa tu calendario y tareas.', 3000, 'success');
 
     if (aiResult.calendar_events && aiResult.calendar_events.length > 0) {
       document.querySelector('.view-tab[data-target="viewCalendar"]')?.click();
@@ -256,7 +312,7 @@ organizeForm.addEventListener('submit', async (e) => {
     if (err.message.includes('API Key') || err.message.includes('Ajustes')) {
       dialogSettings.showModal();
     }
-    alert(err.message || 'Error al comunicarse con la IA');
+    showToast(`⚠️ ${err.message || 'Error al comunicarse con la IA'}`, 4000, 'error');
   } finally {
     loadingIndicator.classList.add('hidden');
     btnSubmitText.disabled = false;
@@ -331,10 +387,10 @@ function renderTasks() {
     });
 
     li.querySelector('.btn-delete-task').addEventListener('click', () => {
-      if (confirm(`¿Eliminar la tarea "${task.title}"?`)) {
+      showConfirmDialog('🗑️ Eliminar Tarea', `¿Deseas eliminar la tarea "${task.title}"?`, 'Eliminar', () => {
         storage.deleteTask(task.id);
-        showToast('🗑️ Tarea eliminada');
-      }
+        showToast('🗑️ Tarea eliminada', 3000);
+      });
     });
 
     taskListElement.appendChild(li);
@@ -466,10 +522,10 @@ function renderKanbanCard(task, currentStatus) {
   });
 
   card.querySelector('.btn-delete-kanban-task')?.addEventListener('click', () => {
-    if (confirm(`¿Eliminar la tarea "${task.title}"?`)) {
+    showConfirmDialog('🗑️ Eliminar Tarea', `¿Deseas eliminar la tarea "${task.title}"?`, 'Eliminar', () => {
       storage.deleteTask(task.id);
-      showToast('🗑️ Tarea eliminada');
-    }
+      showToast('🗑️ Tarea eliminada', 3000);
+    });
   });
 
   return card;
@@ -648,10 +704,10 @@ function renderNotes() {
     });
 
     card.querySelector('.btn-delete-note').addEventListener('click', () => {
-      if (confirm('¿Eliminar esta nota?')) {
+      showConfirmDialog('🗑️ Eliminar Nota', '¿Deseas eliminar esta idea o nota?', 'Eliminar', () => {
         storage.deleteNote(note.id);
-        showToast('🗑️ Nota eliminada');
-      }
+        showToast('🗑️ Nota eliminada', 3000);
+      });
     });
 
     notesContainer.appendChild(card);
@@ -681,25 +737,93 @@ if (formNoteModal) {
     const id = noteModalId.value;
     if (id) {
       storage.updateNote(id, content);
-      showToast('✏️ Nota actualizada');
+      showToast('✏️ Nota actualizada', 3000, 'success');
     } else {
       storage.saveNote({
         id: `note_manual_${Date.now()}`,
         content,
         created_at: new Date().toISOString()
       });
-      showToast('💡 Nota guardada');
+      showToast('💡 Idea guardada con éxito', 3000, 'success');
     }
     dialogNoteModal.close();
   });
 }
 
 btnClearNotes.addEventListener('click', () => {
-  if (confirm('¿Deseas vaciar todas las notas e ideas?')) {
+  showConfirmDialog('🗑️ Vaciar Notas', '¿Deseas vaciar todas las notas e ideas?', 'Vaciar Todo', () => {
     storage.clearAllNotes();
-    showToast('🗑️ Todas las notas han sido eliminadas');
-  }
+    showToast('🗑️ Todas las notas han sido eliminadas', 3000);
+  });
 });
+
+// -------------------------------------------------------------
+// Modal Eventos del Calendario
+// -------------------------------------------------------------
+function openEventModal(eventId = null, defaultDate = null) {
+  if (!dialogEventModal) return;
+
+  if (eventId) {
+    const allEvents = storage.getEvents();
+    const ev = allEvents.find(e => e.id === eventId);
+    if (ev) {
+      eventModalHeading.textContent = '✏️ Editar Evento';
+      eventModalId.value = ev.id;
+      eventModalTitle.value = ev.title || '';
+      eventModalDate.value = ev.date || (calendarComponent ? calendarComponent.formatDateISO(calendarComponent.selectedDate) : '');
+      eventModalStartTime.value = ev.start_time || '';
+      eventModalEndTime.value = ev.end_time || '';
+      eventModalLocation.value = ev.location || '';
+      eventModalDescription.value = ev.description || '';
+      dialogEventModal.showModal();
+      return;
+    }
+  }
+
+  // Nuevo evento manual
+  eventModalHeading.textContent = '📅 Nuevo Evento';
+  eventModalId.value = '';
+  eventModalTitle.value = '';
+  eventModalDate.value = defaultDate || (calendarComponent ? calendarComponent.formatDateISO(calendarComponent.selectedDate) : new Date().toISOString().split('T')[0]);
+  eventModalStartTime.value = '';
+  eventModalEndTime.value = '';
+  eventModalLocation.value = '';
+  eventModalDescription.value = '';
+  dialogEventModal.showModal();
+}
+window.openEventModal = openEventModal;
+
+const closeEventModal = () => dialogEventModal?.close();
+if (btnCloseEventModal) btnCloseEventModal.addEventListener('click', closeEventModal);
+if (btnDismissEventModal) btnDismissEventModal.addEventListener('click', closeEventModal);
+
+if (formEventModal) {
+  formEventModal.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = eventModalTitle.value.trim();
+    const date = eventModalDate.value;
+    if (!title || !date) return;
+
+    const id = eventModalId.value;
+    const eventData = {
+      id: id || `event_manual_${Date.now()}`,
+      title,
+      date,
+      start_time: eventModalStartTime.value || null,
+      end_time: eventModalEndTime.value || null,
+      location: eventModalLocation.value.trim() || '',
+      description: eventModalDescription.value.trim() || '',
+      created_at: new Date().toISOString()
+    };
+
+    storage.saveEvent(eventData);
+    closeEventModal();
+    showToast(id ? '✏️ Evento actualizado con éxito' : '📅 Evento guardado con éxito', 3000, 'success');
+    if (calendarComponent) {
+      calendarComponent.render();
+    }
+  });
+}
 
 // -------------------------------------------------------------
 // Historial de Procesamiento
@@ -744,10 +868,11 @@ function renderHistory() {
 }
 
 btnClearHistory.addEventListener('click', () => {
-  if (confirm('¿Deseas limpiar el historial de entradas?')) {
+  showConfirmDialog('🗑️ Limpiar Historial', '¿Deseas limpiar todo el historial de entradas procesadas?', 'Limpiar', () => {
     localStorage.removeItem('organiza_local_history');
     renderHistory();
-  }
+    showToast('📂 Historial limpiado correctamente', 3000);
+  });
 });
 
 // -------------------------------------------------------------
@@ -986,10 +1111,10 @@ if (btnLogout) {
   btnLogout.addEventListener('click', async () => {
     try {
       await SupabaseService.signOut();
-      showToast('Sesión cerrada. Modo local activo.');
+      showToast('Sesión cerrada. Modo local activo.', 3000);
       closeAuthModal();
     } catch (err) {
-      alert('Error cerrando sesión: ' + err.message);
+      showToast('⚠️ Error cerrando sesión: ' + err.message, 3000, 'error');
     }
   });
 }
@@ -1042,10 +1167,10 @@ if (!localStorage.getItem(CLEANUP_KEY)) {
 
 if (btnClearAllTasks) {
   btnClearAllTasks.addEventListener('click', () => {
-    if (confirm('¿Deseas vaciar todas las tareas?')) {
+    showConfirmDialog('🗑️ Vaciar Tareas', '¿Deseas eliminar todas las tareas de la lista y el tablero?', 'Vaciar Todo', () => {
       storage.clearAllTasks();
-      showToast('🗑️ Todas las tareas han sido eliminadas');
-    }
+      showToast('🗑️ Todas las tareas han sido eliminadas', 3000);
+    });
   });
 }
 
