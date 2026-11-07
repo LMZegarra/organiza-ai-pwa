@@ -1,0 +1,14 @@
+# Dependencias
+node_modules/
+
+# Archivos de entorno y claves
+.env
+.env.local
+
+# Archivos temporales del sistema y uploads
+/tmp/
+*.log
+.DS_Store
+
+# Caché de npm y builds
+.npm/
