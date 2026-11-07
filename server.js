@@ -19,6 +19,27 @@ const upload = multer({
   limits: { fileSize: 25 * 1024 * 1024 }
 });
 
+function getLocalDateISO(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function normalizeTimeString(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (!match) return null;
+  const hour = match[1].padStart(2, '0');
+  const minute = match[2];
+  const hNum = parseInt(hour, 10);
+  const mNum = parseInt(minute, 10);
+  if (hNum >= 0 && hNum <= 23 && mNum >= 0 && mNum <= 59) {
+    return `${hour}:${minute}`;
+  }
+  return null;
+}
+
 // Helper de limpieza y validación de respuesta JSON
 function cleanAndNormalizeAIResponse(content) {
   if (!content || typeof content !== 'string') {
@@ -52,17 +73,17 @@ function cleanAndNormalizeAIResponse(content) {
     calendar_events: Array.isArray(parsed.calendar_events) ? parsed.calendar_events.map((e, idx) => ({
       id: e.id || `event_${Date.now()}_${idx}`,
       title: e.title || 'Evento',
-      date: e.date && /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : new Date().toISOString().slice(0, 10),
-      start_time: e.start_time && /^\d{2}:\d{2}$/.test(e.start_time) ? e.start_time : null,
-      end_time: e.end_time && /^\d{2}:\d{2}$/.test(e.end_time) ? e.end_time : null,
+      date: e.date && /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : getLocalDateISO(),
+      start_time: normalizeTimeString(e.start_time),
+      end_time: normalizeTimeString(e.end_time),
       location: e.location || '',
       description: e.description || ''
     })) : [],
-    notes: Array.isArray(parsed.notes) ? parsed.notes.filter(Boolean) : []
+    notes: Array.isArray(parsed.notes) ? parsed.notes.map(n => typeof n === 'string' ? n : (n.content || JSON.stringify(n))).filter(Boolean) : []
   };
 }
 
-function buildSystemPrompt(currentDate = new Date().toISOString().slice(0, 10)) {
+function buildSystemPrompt(currentDate = getLocalDateISO()) {
   const dayName = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
   return `
 Eres un asistente experto en organización de proyectos, productividad y gestión de agendas.

@@ -165,6 +165,7 @@ export const SupabaseService = {
           category: t.category,
           due_date: t.due_date,
           completed: t.completed,
+          status: t.status || (t.completed ? 'completed' : 'pending'),
           created_at: t.created_at
         })) : [],
         calendar_events: eventsRes.data ? eventsRes.data.map(e => ({
@@ -202,12 +203,18 @@ export const SupabaseService = {
         category: task.category,
         due_date: task.due_date,
         completed: task.completed,
+        status: task.status || (task.completed ? 'completed' : 'pending'),
         updated_at: new Date().toISOString()
       };
       if (user) {
         payload.user_id = user.id;
       }
-      await client.from('organiza_tasks').upsert(payload);
+      const { error } = await client.from('organiza_tasks').upsert(payload);
+      if (error && payload.status) {
+        // Fallback si la columna status aún no existe en Supabase
+        delete payload.status;
+        await client.from('organiza_tasks').upsert(payload);
+      }
     } catch (e) {
       console.warn('Fallo syncTask:', e);
     }

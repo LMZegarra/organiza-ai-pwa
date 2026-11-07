@@ -28,12 +28,24 @@ export class CalendarComponent {
     return `${y}-${m}-${d}`;
   }
 
+  escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   prevMonth() {
+    this.currentDate.setDate(1);
     this.currentDate.setMonth(this.currentDate.getMonth() - 1);
     this.render();
   }
 
   nextMonth() {
+    this.currentDate.setDate(1);
     this.currentDate.setMonth(this.currentDate.getMonth() + 1);
     this.render();
   }
@@ -108,7 +120,7 @@ export class CalendarComponent {
         const visibleEvents = dayEvList.slice(0, maxDots);
         visibleEvents.forEach(ev => {
           const c = ev.color || '#0284c7';
-          eventDotsHtml += `<span class="dot dot-event" style="background-color: ${c};" data-color="${c}" title="${ev.title}"></span>`;
+          eventDotsHtml += `<span class="dot dot-event" style="background-color: ${c};" data-color="${c}" title="${this.escapeHtml(ev.title)}"></span>`;
         });
         if (dayEvList.length > maxDots) {
           eventDotsHtml += `<span class="dot-more" title="${dayEvList.length} eventos">+</span>`;
@@ -167,12 +179,12 @@ export class CalendarComponent {
             <li class="agenda-event-item" style="border-left-color: ${evColor};">
               <div class="event-time-badge" style="background-color: ${evColor}18; color: ${evColor}; border: 1px solid ${evColor}40;">
                 <span class="event-badge-dot" style="background-color: ${evColor};"></span>
-                ${timeLabel}
+                ${this.escapeHtml(timeLabel)}
               </div>
               <div class="event-details">
-                <strong>${ev.title}</strong>
-                ${ev.location ? `<div class="event-location">📍 ${ev.location}</div>` : ''}
-                ${ev.description ? `<p class="event-desc">${ev.description}</p>` : ''}
+                <strong>${this.escapeHtml(ev.title)}</strong>
+                ${ev.location ? `<div class="event-location">📍 ${this.escapeHtml(ev.location)}</div>` : ''}
+                ${ev.description ? `<p class="event-desc">${this.escapeHtml(ev.description)}</p>` : ''}
               </div>
               <div class="event-actions" style="display:flex; align-items:center; gap:4px;">
                 <button class="btn-icon-action btn-edit-event" data-id="${ev.id}" title="Editar evento">✏️</button>
@@ -190,8 +202,8 @@ export class CalendarComponent {
           agendaHtml += `
             <li class="agenda-task-item ${tk.completed ? 'completed' : ''}">
               <input type="checkbox" class="agenda-task-chk" data-id="${tk.id}" ${tk.completed ? 'checked' : ''}>
-              <span class="task-title" style="flex:1;">${tk.title}</span>
-              <span class="task-priority priority-${tk.priority}">${tk.priority}</span>
+              <span class="task-title" style="flex:1;">${this.escapeHtml(tk.title)}</span>
+              <span class="task-priority priority-${tk.priority}">${this.escapeHtml(tk.priority)}</span>
               <button class="btn-icon-danger btn-delete-agenda-task" data-id="${tk.id}" title="Eliminar tarea">🗑️</button>
             </li>
           `;

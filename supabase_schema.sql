@@ -10,12 +10,14 @@ CREATE TABLE IF NOT EXISTS organiza_tasks (
   category TEXT DEFAULT 'General',
   due_date DATE,
   completed BOOLEAN DEFAULT false,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Asegurar columna user_id en tablas preexistentes
+-- Asegurar columna user_id y status en tablas preexistentes
 ALTER TABLE organiza_tasks ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid();
+ALTER TABLE organiza_tasks ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
 
 -- Índices para consultar por usuario, estado y fecha de vencimiento
 CREATE INDEX IF NOT EXISTS idx_organiza_tasks_user_id ON organiza_tasks(user_id);

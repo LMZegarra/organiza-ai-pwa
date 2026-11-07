@@ -25,6 +25,9 @@ function getTasks() {
 
 function saveTask(task) {
   const tasks = getTasks();
+  if (!task.status) {
+    task.status = task.completed ? 'completed' : 'pending';
+  }
   const idx = tasks.findIndex(t => t.id === task.id);
   if (idx >= 0) tasks[idx] = { ...tasks[idx], ...task };
   else tasks.unshift(task);
@@ -36,8 +39,15 @@ function toggleTask(id) {
   const task = tasks.find(t => t.id === id);
   if (task) {
     task.completed = !task.completed;
+    task.status = task.completed ? 'completed' : 'pending';
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
   }
+}
+
+function clearLocalDataOnLogout() {
+  localStorage.removeItem(STORAGE_KEYS.TASKS);
+  localStorage.removeItem(STORAGE_KEYS.EVENTS);
+  localStorage.removeItem(STORAGE_KEYS.NOTES);
 }
 
 function deleteTask(id) {
@@ -129,12 +139,18 @@ localStorage.clear();
 saveTask({ id: 't1', title: 'Comprar café', priority: 'media', category: 'Compras', completed: false });
 assert.strictEqual(getTasks().length, 1);
 assert.strictEqual(getTasks()[0].completed, false);
+assert.strictEqual(getTasks()[0].status, 'pending');
 
 toggleTask('t1');
 assert.strictEqual(getTasks()[0].completed, true);
+assert.strictEqual(getTasks()[0].status, 'completed');
+
+toggleTask('t1');
+assert.strictEqual(getTasks()[0].completed, false);
+assert.strictEqual(getTasks()[0].status, 'pending');
 
 // Update existing task
-saveTask({ id: 't1', title: 'Comprar café descafeinado', priority: 'alta', due_date: '2026-11-10' });
+saveTask({ id: 't1', title: 'Comprar café descafeinado', priority: 'alta', due_date: '2026-11-10', completed: true, status: 'completed' });
 assert.strictEqual(getTasks()[0].title, 'Comprar café descafeinado');
 assert.strictEqual(getTasks()[0].priority, 'alta');
 assert.strictEqual(getTasks()[0].due_date, '2026-11-10');

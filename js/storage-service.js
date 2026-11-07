@@ -66,31 +66,28 @@ class StorageService {
       const user = await SupabaseService.getCurrentUser();
       if (!user) return; // Si no hay sesión activa, mantener en almacenamiento local seguro
 
-      // 1. Subir elementos locales a la cuenta de usuario en Supabase
+      // 1. Subir elementos locales a la cuenta de usuario en Supabase (esperando que terminen todos)
       const localTasks = this.getTasks();
-      for (const t of localTasks) {
-        SupabaseService.syncTask(t);
-      }
       const localEvents = this.getEvents();
-      for (const e of localEvents) {
-        SupabaseService.syncEvent(e);
-      }
       const localNotes = this.getNotes();
-      for (const n of localNotes) {
-        SupabaseService.syncNote(n);
-      }
+
+      await Promise.all([
+        ...localTasks.map(t => SupabaseService.syncTask(t)),
+        ...localEvents.map(e => SupabaseService.syncEvent(e)),
+        ...localNotes.map(n => SupabaseService.syncNote(n))
+      ]);
 
       // 2. Traer datos remotos del usuario
       const remote = await SupabaseService.fetchAllRemote();
       if (!remote) return;
 
-      if (remote.tasks && remote.tasks.length > 0) {
+      if (Array.isArray(remote.tasks)) {
         localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(remote.tasks));
       }
-      if (remote.calendar_events && remote.calendar_events.length > 0) {
+      if (Array.isArray(remote.calendar_events)) {
         localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(remote.calendar_events));
       }
-      if (remote.notes && remote.notes.length > 0) {
+      if (Array.isArray(remote.notes)) {
         localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(remote.notes));
       }
 
@@ -111,10 +108,14 @@ class StorageService {
 
     if (type === 'task') {
       let tasks = this.getTasks();
+      const normalizeTask = (t) => ({
+        ...t,
+        status: t.status || (t.completed ? 'completed' : 'pending')
+      });
       if (eventType === 'INSERT') {
-        if (!tasks.some(t => t.id === newRecord.id)) tasks.unshift(newRecord);
+        if (!tasks.some(t => t.id === newRecord.id)) tasks.unshift(normalizeTask(newRecord));
       } else if (eventType === 'UPDATE') {
-        tasks = tasks.map(t => t.id === newRecord.id ? { ...t, ...newRecord } : t);
+        tasks = tasks.map(t => t.id === newRecord.id ? normalizeTask({ ...t, ...newRecord }) : t);
       } else if (eventType === 'DELETE') {
         tasks = tasks.filter(t => t.id !== oldRecord.id);
       }
@@ -129,7 +130,8 @@ class StorageService {
           start_time: newRecord.start_time,
           end_time: newRecord.end_time,
           location: newRecord.location,
-          description: newRecord.description
+          description: newRecord.description,
+          color: newRecord.color || getNextAvailableEventColor(newRecord.event_date, events, newRecord.id)
         };
         if (!events.some(e => e.id === mapped.id)) events.push(mapped);
       } else if (eventType === 'UPDATE') {
@@ -140,7 +142,8 @@ class StorageService {
           start_time: newRecord.start_time,
           end_time: newRecord.end_time,
           location: newRecord.location,
-          description: newRecord.description
+          description: newRecord.description,
+          color: newRecord.color || e.color || '#0284c7'
         } : e);
       } else if (eventType === 'DELETE') {
         events = events.filter(e => e.id !== oldRecord.id);
@@ -162,14 +165,23 @@ class StorageService {
   // ---- TAREAS ----
   getTasks() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS) || '[]');
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEYS.TASKS) || '[]');
+      return parsed.map(t => {
+        if (!t.status) {
+          t.status = t.completed ? 'completed' : 'pending';
+        }
+        return t;
+      });
     } catch {
       return [];
     }
   }
 
-  saveTask(task) {
+  saveTask(task, notify = true) {
     const tasks = this.getTasks();
+    if (!task.status) {
+      task.status = task.completed ? 'completed' : 'pending';
+    }
     const existingIndex = tasks.findIndex(t => t.id === task.id);
     if (existingIndex >= 0) {
       tasks[existingIndex] = { ...tasks[existingIndex], ...task };
@@ -177,7 +189,7 @@ class StorageService {
       tasks.unshift(task);
     }
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
-    this.notify();
+    if (notify) this.notify();
     SupabaseService.syncTask(task);
   }
 
@@ -186,6 +198,7 @@ class StorageService {
     const task = tasks.find(t => t.id === id);
     if (task) {
       task.completed = !task.completed;
+      task.status = task.completed ? 'completed' : 'pending';
       localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
       this.notify();
       SupabaseService.syncTask(task);
@@ -228,7 +241,7 @@ class StorageService {
     }
   }
 
-  saveEvent(event) {
+  saveEvent(event, notify = true) {
     const events = this.getEvents();
     if (!event.color) {
       event.color = getNextAvailableEventColor(event.date, events, event.id);
@@ -240,7 +253,7 @@ class StorageService {
       events.push(event);
     }
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
-    this.notify();
+    if (notify) this.notify();
     SupabaseService.syncEvent(event);
   }
 
@@ -287,7 +300,7 @@ class StorageService {
     }
   }
 
-  saveNote(note) {
+  saveNote(note, notify = true) {
     const notes = this.getNotes();
     const existingIndex = notes.findIndex(n => n.id === note.id);
     if (existingIndex >= 0) {
@@ -299,7 +312,7 @@ class StorageService {
       });
     }
     localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
-    this.notify();
+    if (notify) this.notify();
     SupabaseService.syncNote(note);
   }
 
@@ -336,9 +349,10 @@ class StorageService {
           priority: t.priority || 'media',
           category: t.category || 'General',
           due_date: t.due_date || null,
+          status: 'pending',
           completed: false,
           created_at: new Date().toISOString()
-        });
+        }, false);
       });
     }
 
@@ -359,7 +373,7 @@ class StorageService {
           created_at: new Date().toISOString()
         };
         allEvents.push(eventObj);
-        this.saveEvent(eventObj);
+        this.saveEvent(eventObj, false);
       });
     }
 
@@ -370,9 +384,12 @@ class StorageService {
           id: `note_${timestamp}_${i}`,
           content: typeof n === 'string' ? n : (n.content || JSON.stringify(n)),
           created_at: new Date().toISOString()
-        });
+        }, false);
       });
     }
+
+    // Emitir una sola notificación para actualizar la interfaz de golpe
+    this.notify();
 
     // 4. Historial
     try {
@@ -390,6 +407,13 @@ class StorageService {
     } catch (e) {
       console.warn('Error guardando en historial:', e);
     }
+  }
+  clearLocalDataOnLogout() {
+    localStorage.removeItem(STORAGE_KEYS.TASKS);
+    localStorage.removeItem(STORAGE_KEYS.EVENTS);
+    localStorage.removeItem(STORAGE_KEYS.NOTES);
+    localStorage.removeItem(STORAGE_KEYS.HISTORY);
+    this.notify();
   }
 }
 

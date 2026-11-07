@@ -7,6 +7,27 @@
 
 import { APP_CONFIG } from './config.js';
 
+export function getLocalDateISO(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function normalizeTimeString(timeStr) {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (!match) return null;
+  const hour = match[1].padStart(2, '0');
+  const minute = match[2];
+  const hNum = parseInt(hour, 10);
+  const mNum = parseInt(minute, 10);
+  if (hNum >= 0 && hNum <= 23 && mNum >= 0 && mNum <= 59) {
+    return `${hour}:${minute}`;
+  }
+  return null;
+}
+
 export class AIService {
   static cleanAndParseResponse(rawContent) {
     if (!rawContent || typeof rawContent !== 'string') {
@@ -40,17 +61,17 @@ export class AIService {
       calendar_events: Array.isArray(data.calendar_events) ? data.calendar_events.map((e, idx) => ({
         id: e.id || `event_${Date.now()}_${idx}`,
         title: e.title || 'Evento',
-        date: e.date && /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : new Date().toISOString().slice(0, 10),
-        start_time: e.start_time && /^\d{2}:\d{2}$/.test(e.start_time) ? e.start_time : null,
-        end_time: e.end_time && /^\d{2}:\d{2}$/.test(e.end_time) ? e.end_time : null,
+        date: e.date && /^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : getLocalDateISO(),
+        start_time: normalizeTimeString(e.start_time),
+        end_time: normalizeTimeString(e.end_time),
         location: e.location || '',
         description: e.description || ''
       })) : [],
-      notes: Array.isArray(data.notes) ? data.notes.filter(Boolean) : []
+      notes: Array.isArray(data.notes) ? data.notes.map(n => typeof n === 'string' ? n : (n.content || JSON.stringify(n))).filter(Boolean) : []
     };
   }
 
-  static getSystemPrompt(currentDateISO = new Date().toISOString().slice(0, 10)) {
+  static getSystemPrompt(currentDateISO = getLocalDateISO()) {
     const dayOfWeek = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
     return `
 Eres un asistente de organización personal de alta precisión.
@@ -146,7 +167,7 @@ REGLAS ESTRICTAS DE EXTRACCIÓN:
     const customKey = localStorage.getItem('custom_openrouter_key')?.trim() || '';
     const apiKey = customKey || APP_CONFIG.DEFAULT_OPENROUTER_KEY || '';
     const model = APP_CONFIG.DEFAULT_OPENROUTER_MODEL || 'openrouter/free';
-    const currentDate = new Date().toISOString().slice(0, 10);
+    const currentDate = getLocalDateISO();
 
     // 1. Intentar llamar al backend (/api/organize-text en Vercel Serverless o Express local)
     // El servidor tiene configurada la variable OPENROUTER_API_KEY de forma segura

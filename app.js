@@ -6,7 +6,7 @@
 
 import { storage, EVENT_PALETTE, EVENT_COLORS, getNextAvailableEventColor } from './js/storage-service.js';
 import { SupabaseService } from './js/supabase-client.js';
-import { AIService } from './js/ai-service.js';
+import { AIService, getLocalDateISO } from './js/ai-service.js';
 import { CalendarComponent } from './js/calendar-component.js';
 import { APP_CONFIG } from './js/config.js';
 
@@ -143,6 +143,17 @@ const btnMagicLink = document.getElementById('btnMagicLink');
 
 let authMode = 'login';
 let activeUser = null;
+
+// Helper para prevenir inyecciones XSS y roturas de atributos HTML
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // Feedback Visual y Notificaciones en Esquina Superior
 function showToast(message, duration = 3000, type = 'info') {
@@ -359,11 +370,11 @@ function renderTasks() {
     li.innerHTML = `
       <input type="checkbox" class="task-chk" ${task.completed ? 'checked' : ''} data-id="${task.id}" aria-label="Marcar como completada">
       <div class="task-body">
-        <span class="task-text">${task.title}</span>
+        <span class="task-text">${escapeHtml(task.title)}</span>
         <div class="task-meta">
-          <span class="category-tag">${task.category || 'General'}</span>
-          <span class="task-priority priority-${task.priority || 'media'}">${task.priority || 'media'}</span>
-          ${task.due_date ? `<span class="task-due">📅 ${task.due_date}</span>` : ''}
+          <span class="category-tag">${escapeHtml(task.category || 'General')}</span>
+          <span class="task-priority priority-${task.priority || 'media'}">${escapeHtml(task.priority || 'media')}</span>
+          ${task.due_date ? `<span class="task-due">📅 ${escapeHtml(task.due_date)}</span>` : ''}
         </div>
       </div>
       <div class="task-actions">
@@ -480,11 +491,11 @@ function renderKanbanCard(task, currentStatus) {
   }
 
   card.innerHTML = `
-    <div class="kanban-card-title">${task.title}</div>
+    <div class="kanban-card-title">${escapeHtml(task.title)}</div>
     <div class="kanban-card-meta">
-      <span class="category-tag">${task.category || 'General'}</span>
-      <span class="task-priority priority-${task.priority || 'media'}">${task.priority || 'media'}</span>
-      ${task.due_date ? `<span class="task-due">📅 ${task.due_date}</span>` : ''}
+      <span class="category-tag">${escapeHtml(task.category || 'General')}</span>
+      <span class="task-priority priority-${task.priority || 'media'}">${escapeHtml(task.priority || 'media')}</span>
+      ${task.due_date ? `<span class="task-due">📅 ${escapeHtml(task.due_date)}</span>` : ''}
     </div>
     <div class="kanban-card-actions">
       <div class="kanban-move-btns">
@@ -497,7 +508,7 @@ function renderKanbanCard(task, currentStatus) {
     </div>
   `;
 
-  // Drag and drop nativo
+  // Drag and drop nativo para escritorio
   card.addEventListener('dragstart', (e) => {
     e.dataTransfer.setData('text/plain', task.id);
     e.dataTransfer.effectAllowed = 'move';
@@ -506,6 +517,57 @@ function renderKanbanCard(task, currentStatus) {
 
   card.addEventListener('dragend', () => {
     card.classList.remove('dragging');
+  });
+
+  // Soporte táctil (Touch Drag) para arrastrar tarjetas en pantallas táctiles / celulares
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isTouchDragging = false;
+  let activeDropZone = null;
+
+  card.addEventListener('touchstart', (e) => {
+    if (e.target.closest('button')) return;
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    isTouchDragging = false;
+  }, { passive: true });
+
+  card.addEventListener('touchmove', (e) => {
+    if (e.target.closest('button') || !e.touches[0]) return;
+    const touch = e.touches[0];
+    const diffX = Math.abs(touch.clientX - touchStartX);
+    const diffY = Math.abs(touch.clientY - touchStartY);
+
+    if (diffX > 18 || diffY > 18) {
+      isTouchDragging = true;
+      card.classList.add('dragging');
+
+      const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+      const zone = elem?.closest('.kanban-cards-zone');
+
+      document.querySelectorAll('.kanban-cards-zone.drag-over').forEach(z => z.classList.remove('drag-over'));
+      if (zone) {
+        zone.classList.add('drag-over');
+        activeDropZone = zone;
+      }
+    }
+  }, { passive: true });
+
+  card.addEventListener('touchend', () => {
+    if (isTouchDragging) {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.kanban-cards-zone.drag-over').forEach(z => z.classList.remove('drag-over'));
+
+      if (activeDropZone && activeDropZone.dataset.status) {
+        const targetStatus = activeDropZone.dataset.status;
+        if (targetStatus !== currentStatus) {
+          moveTaskToStatus(task.id, targetStatus);
+        }
+      }
+      isTouchDragging = false;
+      activeDropZone = null;
+    }
   });
 
   // Eventos de botones táctiles
@@ -669,7 +731,7 @@ function renderNotes() {
     const isSearching = noteSearchQuery && noteSearchQuery.trim().length > 0;
     notesContainer.innerHTML = `
       <p style="text-align:center; grid-column:1/-1; padding:24px; color:var(--text-muted); font-size:0.9rem;">
-        ${isSearching ? `No se encontraron notas con "${noteSearchQuery}".` : 'Aún no tienes ideas o notas rápidas guardadas.'}
+        ${isSearching ? `No se encontraron notas con &quot;${escapeHtml(noteSearchQuery)}&quot;.` : 'Aún no tienes ideas o notas rápidas guardadas.'}
       </p>
     `;
     return;
@@ -683,9 +745,9 @@ function renderNotes() {
     const dateFormatted = note.created_at ? new Date(note.created_at).toLocaleDateString() : '';
 
     card.innerHTML = `
-      <p class="note-content">${content}</p>
+      <p class="note-content">${escapeHtml(content)}</p>
       <div class="note-footer">
-        <span>${dateFormatted}</span>
+        <span>${escapeHtml(dateFormatted)}</span>
         <div class="note-card-actions">
           <button class="btn-link btn-copy-note" style="margin-right:6px;">Copiar</button>
           <button class="btn-icon-action btn-edit-note" title="Editar nota">✏️</button>
@@ -824,7 +886,7 @@ function openEventModal(eventId = null, defaultDate = null) {
   }
 
   // Nuevo evento manual
-  const targetDate = defaultDate || (calendarComponent ? calendarComponent.formatDateISO(calendarComponent.selectedDate) : new Date().toISOString().split('T')[0]);
+  const targetDate = defaultDate || (calendarComponent ? calendarComponent.formatDateISO(calendarComponent.selectedDate) : getLocalDateISO());
   eventModalHeading.textContent = '📅 Nuevo Evento';
   eventModalId.value = '';
   eventModalTitle.value = '';
@@ -912,11 +974,11 @@ function renderHistory() {
     card.className = 'history-card';
     card.innerHTML = `
       <div class="history-meta">
-        <span>📅 ${item.date}</span>
+        <span>📅 ${escapeHtml(item.date)}</span>
         <span>✅ ${item.tasksCount} tareas &bull; 🗓️ ${item.eventsCount} eventos</span>
       </div>
-      <div class="history-summary">${item.summary || 'Procesado con IA'}</div>
-      <div class="history-raw">"${item.rawText}"</div>
+      <div class="history-summary">${escapeHtml(item.summary || 'Procesado con IA')}</div>
+      <div class="history-raw">&quot;${escapeHtml(item.rawText)}&quot;</div>
     `;
 
     card.addEventListener('click', () => {
@@ -1172,7 +1234,8 @@ if (btnLogout) {
   btnLogout.addEventListener('click', async () => {
     try {
       await SupabaseService.signOut();
-      showToast('Sesión cerrada. Modo local activo.', 3000);
+      storage.clearLocalDataOnLogout();
+      showToast('Sesión cerrada. Modo local reiniciado.', 3000);
       closeAuthModal();
     } catch (err) {
       showToast('⚠️ Error cerrando sesión: ' + err.message, 3000, 'error');
@@ -1246,6 +1309,16 @@ applyTheme(initialTheme);
 if (selectAppTheme) {
   selectAppTheme.value = initialTheme;
 }
+
+// Cierre accesible de modales al pulsar en el fondo exterior (Light Dismiss)
+[dialogSettings, dialogTaskModal, dialogEventModal, dialogNoteModal, dialogConfirmModal].forEach(dlg => {
+  if (!dlg) return;
+  dlg.addEventListener('click', (e) => {
+    if (e.target === dlg) {
+      dlg.close();
+    }
+  });
+});
 
 updateSyncBadge();
 renderTasks();
