@@ -27,6 +27,7 @@ const taskListElement = document.getElementById('taskListElement');
 const selectCategoryFilter = document.getElementById('selectCategoryFilter');
 const selectStatusFilter = document.getElementById('selectStatusFilter');
 const btnQuickAddTask = document.getElementById('btnQuickAddTask');
+const btnClearAllTasks = document.getElementById('btnClearAllTasks');
 
 const notesContainer = document.getElementById('notesContainer');
 const btnClearNotes = document.getElementById('btnClearNotes');
@@ -709,13 +710,24 @@ storage.subscribe(() => {
   updateSyncBadge();
 });
 
-// Limpieza automática única de ideas y eventos de prueba anteriores solicitada
-const CLEANUP_KEY = 'organiza_cleanup_old_tests_v1';
+// Limpieza automática única de ideas, eventos y tareas de prueba anteriores
+const CLEANUP_KEY = 'organiza_cleanup_all_test_data_v2';
 if (!localStorage.getItem(CLEANUP_KEY)) {
+  storage.clearAllTasks();
   storage.clearAllEvents();
   storage.clearAllNotes();
+  localStorage.removeItem('organiza_local_history');
   localStorage.setItem(CLEANUP_KEY, 'true');
-  console.log('[Cleanup] Eventos e ideas de prueba antiguos eliminados.');
+  console.log('[Cleanup v2] Todas las tareas, eventos e ideas de prueba antiguos eliminados.');
+}
+
+if (btnClearAllTasks) {
+  btnClearAllTasks.addEventListener('click', () => {
+    if (confirm('¿Deseas vaciar todas las tareas?')) {
+      storage.clearAllTasks();
+      showToast('🗑️ Todas las tareas han sido eliminadas');
+    }
+  });
 }
 
 // Carga Inicial

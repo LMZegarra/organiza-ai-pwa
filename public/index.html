@@ -289,7 +289,10 @@
               <option value="all">Todas</option>
             </select>
           </div>
-          <button id="btnQuickAddTask" class="btn btn-sm btn-outline">+ Tarea Manual</button>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button id="btnQuickAddTask" class="btn btn-sm btn-outline">+ Tarea Manual</button>
+            <button id="btnClearAllTasks" class="btn-link" style="font-size:0.75rem; color:var(--text-muted);">Vaciar tareas</button>
+          </div>
         </div>
 
         <ul id="taskListElement" class="tasks-list"></ul>

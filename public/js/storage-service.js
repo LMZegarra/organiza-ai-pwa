@@ -176,6 +176,19 @@ class StorageService {
     SupabaseService.deleteTask(id);
   }
 
+  clearAllTasks() {
+    localStorage.removeItem(STORAGE_KEYS.TASKS);
+    this.notify();
+    const client = SupabaseService.getClient();
+    if (client) {
+      SupabaseService.getCurrentUser().then(user => {
+        if (user) {
+          client.from('organiza_tasks').delete().eq('user_id', user.id).then(() => {});
+        }
+      });
+    }
+  }
+
   // ---- EVENTOS DE CALENDARIO ----
   getEvents() {
     try {

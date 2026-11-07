@@ -161,8 +161,9 @@ export class CalendarComponent {
           agendaHtml += `
             <li class="agenda-task-item ${tk.completed ? 'completed' : ''}">
               <input type="checkbox" class="agenda-task-chk" data-id="${tk.id}" ${tk.completed ? 'checked' : ''}>
-              <span class="task-title">${tk.title}</span>
+              <span class="task-title" style="flex:1;">${tk.title}</span>
               <span class="task-priority priority-${tk.priority}">${tk.priority}</span>
+              <button class="btn-icon-danger btn-delete-agenda-task" data-id="${tk.id}" title="Eliminar tarea">🗑️</button>
             </li>
           `;
         });
@@ -253,6 +254,16 @@ export class CalendarComponent {
       chk.addEventListener('change', (e) => {
         const id = e.currentTarget.dataset.id;
         storage.toggleTask(id);
+      });
+    });
+
+    // Eliminar tarea desde la agenda
+    this.container.querySelectorAll('.btn-delete-agenda-task').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (confirm('¿Deseas eliminar esta tarea?')) {
+          storage.deleteTask(id);
+        }
       });
     });
 
