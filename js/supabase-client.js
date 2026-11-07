@@ -67,11 +67,90 @@ export const SupabaseService = {
     return true;
   },
 
+  // ---- MÉTODOS DE AUTENTICACIÓN (SUPABASE AUTH) ----
+  async getCurrentUser() {
+    const client = this.getClient();
+    if (!client) return null;
+    try {
+      const { data: { user }, error } = await client.auth.getUser();
+      if (error || !user) return null;
+      return user;
+    } catch {
+      return null;
+    }
+  },
+
+  async getSession() {
+    const client = this.getClient();
+    if (!client) return null;
+    try {
+      const { data: { session }, error } = await client.auth.getSession();
+      if (error || !session) return null;
+      return session;
+    } catch {
+      return null;
+    }
+  },
+
+  async signUp(email, password) {
+    const client = this.getClient();
+    if (!client) throw new Error('Cliente de Supabase no inicializado');
+    const { data, error } = await client.auth.signUp({
+      email: email.trim(),
+      password: password
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async signIn(email, password) {
+    const client = this.getClient();
+    if (!client) throw new Error('Cliente de Supabase no inicializado');
+    const { data, error } = await client.auth.signInWithPassword({
+      email: email.trim(),
+      password: password
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async signInWithOtp(email) {
+    const client = this.getClient();
+    if (!client) throw new Error('Cliente de Supabase no inicializado');
+    const { data, error } = await client.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        emailRedirectTo: window.location.origin
+      }
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  async signOut() {
+    const client = this.getClient();
+    if (!client) return;
+    const { error } = await client.auth.signOut();
+    if (error) throw error;
+  },
+
+  onAuthStateChange(callback) {
+    const client = this.getClient();
+    if (!client) return null;
+    return client.auth.onAuthStateChange((event, session) => {
+      callback(event, session);
+    });
+  },
+
   async fetchAllRemote() {
     const client = this.getClient();
     if (!client) return null;
 
     try {
+      const user = await this.getCurrentUser();
+      // Si no hay usuario autenticado, conservamos los datos locales sin pisar
+      if (!user) return null;
+
       const [tasksRes, eventsRes, notesRes] = await Promise.all([
         client.from('organiza_tasks').select('*').order('created_at', { ascending: false }),
         client.from('organiza_events').select('*').order('event_date', { ascending: true }),
@@ -114,7 +193,8 @@ export const SupabaseService = {
     const client = this.getClient();
     if (!client) return;
     try {
-      await client.from('organiza_tasks').upsert({
+      const user = await this.getCurrentUser();
+      const payload = {
         id: task.id,
         title: task.title,
         priority: task.priority,
@@ -122,7 +202,11 @@ export const SupabaseService = {
         due_date: task.due_date,
         completed: task.completed,
         updated_at: new Date().toISOString()
-      });
+      };
+      if (user) {
+        payload.user_id = user.id;
+      }
+      await client.from('organiza_tasks').upsert(payload);
     } catch (e) {
       console.warn('Fallo syncTask:', e);
     }
@@ -142,7 +226,8 @@ export const SupabaseService = {
     const client = this.getClient();
     if (!client) return;
     try {
-      await client.from('organiza_events').upsert({
+      const user = await this.getCurrentUser();
+      const payload = {
         id: event.id,
         title: event.title,
         event_date: event.date,
@@ -151,7 +236,11 @@ export const SupabaseService = {
         location: event.location,
         description: event.description,
         updated_at: new Date().toISOString()
-      });
+      };
+      if (user) {
+        payload.user_id = user.id;
+      }
+      await client.from('organiza_events').upsert(payload);
     } catch (e) {
       console.warn('Fallo syncEvent:', e);
     }
@@ -171,11 +260,16 @@ export const SupabaseService = {
     const client = this.getClient();
     if (!client) return;
     try {
-      await client.from('organiza_notes').upsert({
+      const user = await this.getCurrentUser();
+      const payload = {
         id: note.id,
         content: note.content || note.text,
         created_at: note.created_at || new Date().toISOString()
-      });
+      };
+      if (user) {
+        payload.user_id = user.id;
+      }
+      await client.from('organiza_notes').upsert(payload);
     } catch (e) {
       console.warn('Fallo syncNote:', e);
     }

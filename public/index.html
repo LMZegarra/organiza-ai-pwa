@@ -26,6 +26,9 @@
         <div id="syncBadge" class="sync-badge local" title="Estado de sincronización">
           <span class="sync-dot"></span> <span id="syncText">Local</span>
         </div>
+        <button id="btnAuthHeader" class="btn btn-sm btn-outline auth-header-btn" title="Iniciar sesión o registrarse">
+          👤 <span id="authBtnText">Acceder</span>
+        </button>
         <button id="btnSettings" class="icon-btn" title="Configuración" aria-label="Abrir configuración">⚙️</button>
       </div>
     </header>
@@ -58,6 +61,80 @@
         <div class="dialog-actions" style="margin-top:14px;">
           <button id="btnSaveSettings" class="btn btn-primary" type="button">Guardar</button>
           <button id="btnDismissModal" class="btn btn-secondary" type="button">Cerrar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Modal Nativo de Autenticación Supabase Auth -->
+    <dialog id="dialogAuthModal" class="modal-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h3 id="authModalTitle">🔐 Mi Cuenta</h3>
+          <button id="btnCloseAuthModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
+        </div>
+
+        <!-- Estado de usuario logueado -->
+        <div id="authProfileSection" class="auth-profile-section hidden">
+          <div class="user-profile-card">
+            <span class="user-avatar">👤</span>
+            <div>
+              <p class="user-email-label">Sesión activa como:</p>
+              <strong id="userEmailDisplay" class="user-email-text"></strong>
+            </div>
+          </div>
+          <div class="profile-info-banner">
+            ✨ Tus tareas, eventos y notas están sincronizados en tiempo real con tu cuenta segura en Supabase.
+          </div>
+          <div class="dialog-actions" style="margin-top:16px;">
+            <button id="btnLogout" class="btn btn-danger" type="button">Cerrar Sesión</button>
+            <button id="btnDismissAuthProfile" class="btn btn-secondary" type="button">Cerrar</button>
+          </div>
+        </div>
+
+        <!-- Formulario de Login / Registro -->
+        <div id="authFormSection" class="auth-form-section">
+          <!-- Pestañas Iniciar Sesión / Registrarse -->
+          <div class="auth-tabs">
+            <button id="tabAuthLogin" class="auth-tab-btn active" type="button">Iniciar Sesión</button>
+            <button id="tabAuthSignup" class="auth-tab-btn" type="button">Registrarse</button>
+          </div>
+
+          <div id="authAlertBox" class="auth-alert hidden"></div>
+
+          <form id="formAuth" class="modal-form">
+            <label class="modal-label" for="inputAuthEmail">Correo electrónico:</label>
+            <input
+              type="email"
+              id="inputAuthEmail"
+              class="styled-input"
+              placeholder="tu@correo.com"
+              required
+              autocomplete="email"
+            />
+
+            <label class="modal-label" for="inputAuthPassword">Contraseña:</label>
+            <input
+              type="password"
+              id="inputAuthPassword"
+              class="styled-input"
+              placeholder="Mínimo 6 caracteres"
+              required
+              minlength="6"
+              autocomplete="current-password"
+            />
+
+            <button id="btnSubmitAuth" class="btn btn-primary" type="submit" style="margin-top:6px;">
+              Ingresar
+            </button>
+
+            <div style="text-align:center; margin:8px 0; font-size:0.75rem; color:var(--text-muted);">
+              o accede sin recordar contraseña
+            </div>
+
+            <button id="btnMagicLink" class="btn btn-outline btn-sm" type="button">
+              ✉️ Enviar enlace mágico al correo
+            </button>
+          </form>
         </div>
       </div>
     </dialog>

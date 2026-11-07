@@ -68,6 +68,28 @@ const noteModalContent = document.getElementById('noteModalContent');
 const btnCloseNoteModal = document.getElementById('btnCloseNoteModal');
 const btnDismissNoteModal = document.getElementById('btnDismissNoteModal');
 
+// Auth Header y Modal Supabase Auth
+const btnAuthHeader = document.getElementById('btnAuthHeader');
+const authBtnText = document.getElementById('authBtnText');
+const dialogAuthModal = document.getElementById('dialogAuthModal');
+const btnCloseAuthModal = document.getElementById('btnCloseAuthModal');
+const authProfileSection = document.getElementById('authProfileSection');
+const userEmailDisplay = document.getElementById('userEmailDisplay');
+const btnLogout = document.getElementById('btnLogout');
+const btnDismissAuthProfile = document.getElementById('btnDismissAuthProfile');
+const authFormSection = document.getElementById('authFormSection');
+const tabAuthLogin = document.getElementById('tabAuthLogin');
+const tabAuthSignup = document.getElementById('tabAuthSignup');
+const authAlertBox = document.getElementById('authAlertBox');
+const formAuth = document.getElementById('formAuth');
+const inputAuthEmail = document.getElementById('inputAuthEmail');
+const inputAuthPassword = document.getElementById('inputAuthPassword');
+const btnSubmitAuth = document.getElementById('btnSubmitAuth');
+const btnMagicLink = document.getElementById('btnMagicLink');
+
+let authMode = 'login';
+let activeUser = null;
+
 // Feedback Táctil (Toast)
 function showToast(message, duration = 2400) {
   let toast = document.getElementById('toastNotification');
@@ -97,7 +119,7 @@ if (calendarMount) {
 // Sincronización y Estado de Conexión
 // -------------------------------------------------------------
 function updateSyncBadge() {
-  if (SupabaseService.isConfigured()) {
+  if (activeUser && SupabaseService.isConfigured()) {
     syncBadge.className = 'sync-badge synced';
     syncText.textContent = 'En línea (Nube)';
   } else {
@@ -513,6 +535,170 @@ btnSaveSettings.addEventListener('click', () => {
   alert('Ajustes guardados correctamente.');
   closeSettingsDialog();
 });
+
+// -------------------------------------------------------------
+// Controlador de Autenticación de Usuarios (Supabase Auth)
+// -------------------------------------------------------------
+function setAuthAlert(msg, type = 'error') {
+  authAlertBox.textContent = msg;
+  authAlertBox.className = `auth-alert ${type}`;
+  authAlertBox.classList.remove('hidden');
+}
+
+function clearAuthAlert() {
+  authAlertBox.textContent = '';
+  authAlertBox.className = 'auth-alert hidden';
+}
+
+function updateAuthUI(user) {
+  activeUser = user;
+  updateSyncBadge();
+
+  if (user && user.email) {
+    authBtnText.textContent = user.email.split('@')[0];
+    userEmailDisplay.textContent = user.email;
+    authProfileSection.classList.remove('hidden');
+    authFormSection.classList.add('hidden');
+  } else {
+    authBtnText.textContent = 'Acceder';
+    userEmailDisplay.textContent = '';
+    authProfileSection.classList.add('hidden');
+    authFormSection.classList.remove('hidden');
+  }
+}
+
+// Abrir modal de Auth
+if (btnAuthHeader) {
+  btnAuthHeader.addEventListener('click', () => {
+    clearAuthAlert();
+    dialogAuthModal.showModal();
+  });
+}
+
+const closeAuthModal = () => dialogAuthModal.close();
+if (btnCloseAuthModal) btnCloseAuthModal.addEventListener('click', closeAuthModal);
+if (btnDismissAuthProfile) btnDismissAuthProfile.addEventListener('click', closeAuthModal);
+
+// Alternar pestañas Login / Signup
+if (tabAuthLogin && tabAuthSignup) {
+  tabAuthLogin.addEventListener('click', () => {
+    authMode = 'login';
+    tabAuthLogin.classList.add('active');
+    tabAuthSignup.classList.remove('active');
+    btnSubmitAuth.textContent = 'Ingresar';
+    clearAuthAlert();
+  });
+
+  tabAuthSignup.addEventListener('click', () => {
+    authMode = 'signup';
+    tabAuthSignup.classList.add('active');
+    tabAuthLogin.classList.remove('active');
+    btnSubmitAuth.textContent = 'Crear Cuenta';
+    clearAuthAlert();
+  });
+}
+
+// Enviar formulario (Login / Registro)
+if (formAuth) {
+  formAuth.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearAuthAlert();
+
+    const email = inputAuthEmail.value.trim();
+    const password = inputAuthPassword.value;
+
+    if (!email || !password) {
+      setAuthAlert('Por favor completa todos los campos.');
+      return;
+    }
+
+    btnSubmitAuth.disabled = true;
+    btnSubmitAuth.textContent = 'Procesando...';
+
+    try {
+      if (authMode === 'login') {
+        await SupabaseService.signIn(email, password);
+        showToast('👋 ¡Sesión iniciada con éxito!');
+        closeAuthModal();
+      } else {
+        const data = await SupabaseService.signUp(email, password);
+        if (data?.user && !data?.session) {
+          setAuthAlert('📧 Te enviamos un enlace de confirmación a tu correo. Por favor revísalo.', 'success');
+        } else {
+          showToast('🎉 ¡Cuenta creada y sesión iniciada!');
+          closeAuthModal();
+        }
+      }
+    } catch (err) {
+      console.warn('Error en auth:', err);
+      setAuthAlert(err.message || 'Error en la autenticación.');
+    } finally {
+      btnSubmitAuth.disabled = false;
+      btnSubmitAuth.textContent = authMode === 'login' ? 'Ingresar' : 'Crear Cuenta';
+    }
+  });
+}
+
+// Magic Link
+if (btnMagicLink) {
+  btnMagicLink.addEventListener('click', async () => {
+    clearAuthAlert();
+    const email = inputAuthEmail.value.trim();
+    if (!email) {
+      setAuthAlert('Ingresa tu correo para enviarte el enlace mágico.');
+      inputAuthEmail.focus();
+      return;
+    }
+
+    btnMagicLink.disabled = true;
+    btnMagicLink.textContent = 'Enviando enlace...';
+
+    try {
+      await SupabaseService.signInWithOtp(email);
+      setAuthAlert('📬 Enlace mágico enviado. Revisa tu bandeja de entrada para acceder directamente.', 'success');
+    } catch (err) {
+      setAuthAlert(err.message || 'No se pudo enviar el enlace mágico.');
+    } finally {
+      btnMagicLink.disabled = false;
+      btnMagicLink.textContent = '✉️ Enviar enlace mágico al correo';
+    }
+  });
+}
+
+// Cerrar Sesión
+if (btnLogout) {
+  btnLogout.addEventListener('click', async () => {
+    try {
+      await SupabaseService.signOut();
+      showToast('Sesión cerrada. Modo local activo.');
+      closeAuthModal();
+    } catch (err) {
+      alert('Error cerrando sesión: ' + err.message);
+    }
+  });
+}
+
+// Suscripción al estado de Auth
+if (SupabaseService.isConfigured()) {
+  SupabaseService.onAuthStateChange(async (event, session) => {
+    console.log('[Supabase Auth Event]', event);
+    const user = session?.user || null;
+    updateAuthUI(user);
+
+    if (user) {
+      // Sincronizar inmediatamente datos de la cuenta
+      await storage.syncWithCloud();
+    }
+  });
+
+  // Consultar sesión existente al arrancar
+  SupabaseService.getCurrentUser().then(user => {
+    updateAuthUI(user);
+    if (user) {
+      storage.syncWithCloud();
+    }
+  });
+}
 
 // -------------------------------------------------------------
 // Registro en el Store y Actualizaciones Globales

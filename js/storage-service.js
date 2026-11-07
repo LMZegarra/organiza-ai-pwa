@@ -39,10 +39,27 @@ class StorageService {
     if (!SupabaseService.isConfigured()) return;
 
     try {
+      const user = await SupabaseService.getCurrentUser();
+      if (!user) return; // Si no hay sesión activa, mantener en almacenamiento local seguro
+
+      // 1. Subir elementos locales a la cuenta de usuario en Supabase
+      const localTasks = this.getTasks();
+      for (const t of localTasks) {
+        SupabaseService.syncTask(t);
+      }
+      const localEvents = this.getEvents();
+      for (const e of localEvents) {
+        SupabaseService.syncEvent(e);
+      }
+      const localNotes = this.getNotes();
+      for (const n of localNotes) {
+        SupabaseService.syncNote(n);
+      }
+
+      // 2. Traer datos remotos del usuario
       const remote = await SupabaseService.fetchAllRemote();
       if (!remote) return;
 
-      // Merge local y remoto
       if (remote.tasks && remote.tasks.length > 0) {
         localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(remote.tasks));
       }
@@ -55,7 +72,7 @@ class StorageService {
 
       this.notify();
 
-      // Suscribirse a cambios en tiempo real
+      // 3. Suscribirse a cambios en tiempo real
       SupabaseService.setupRealtime((type, payload) => {
         this.handleRealtimeEvent(type, payload);
       });
