@@ -99,7 +99,19 @@ assert.strictEqual(getTasks()[0].priority, 'alta');
 assert.strictEqual(getTasks()[0].due_date, '2026-11-10');
 assert.strictEqual(getTasks()[0].completed, true);
 
+// Prueba de estados de Kanban (pending, in_progress, completed)
+saveTask({ id: 't2', title: 'Diseñar arquitectura', priority: 'alta', status: 'pending', completed: false });
+assert.strictEqual(getTasks().find(t => t.id === 't2').status, 'pending');
+
+saveTask({ id: 't2', status: 'in_progress' });
+assert.strictEqual(getTasks().find(t => t.id === 't2').status, 'in_progress');
+
+saveTask({ id: 't2', status: 'completed', completed: true });
+assert.strictEqual(getTasks().find(t => t.id === 't2').completed, true);
+assert.strictEqual(getTasks().find(t => t.id === 't2').status, 'completed');
+
 deleteTask('t1');
+deleteTask('t2');
 assert.strictEqual(getTasks().length, 0);
 
 // Pruebas de Notas

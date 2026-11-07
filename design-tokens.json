@@ -1,0 +1,108 @@
+{
+  "projectName": "Agenda & Calendar App",
+  "themeConcept": "Calm, Productivity & Soft Blue",
+  "typography": {
+    "primaryFont": "Plus Jakarta Sans, sans-serif",
+    "secondaryFont": "Inter, sans-serif",
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600
+    }
+  },
+  "colorPalette": {
+    "primary": {
+      "hex": "#38BDF8",
+      "rgb": "rgb(56, 189, 248)",
+      "hsl": "hsl(199, 94%, 60%)",
+      "usage": "Main action buttons, active calendar dates, highlights"
+    },
+    "secondary": {
+      "hex": "#7DD3FC",
+      "rgb": "rgb(125, 211, 252)",
+      "hsl": "hsl(199, 94%, 74%)",
+      "usage": "Hover states, task tags, subtle indicators"
+    },
+    "background": {
+      "hex": "#F0F9FF",
+      "rgb": "rgb(240, 249, 255)",
+      "hsl": "hsl(204, 100%, 97%)",
+      "usage": "General app background (calm soft sky)"
+    },
+    "surface": {
+      "hex": "#FFFFFF",
+      "rgb": "rgb(255, 255, 255)",
+      "hsl": "hsl(0, 0%, 100%)",
+      "usage": "Task cards, calendar grid background, inputs"
+    },
+    "surfaceAlt": {
+      "hex": "#E0F2FE",
+      "rgb": "rgb(224, 242, 254)",
+      "hsl": "hsl(204, 94%, 94%)",
+      "usage": "Hovered cards, selected list items"
+    },
+    "text": {
+      "main": "#0C4A6E",
+      "muted": "#0369A1",
+      "usage": "Primary headings, list item texts, subtle metadata"
+    }
+  },
+  "uiElements": {
+    "borderRadius": {
+      "inputs": "8px",
+      "cards": "12px",
+      "modals": "16px"
+    },
+    "shadows": {
+      "soft": "0px 4px 16px rgba(56, 189, 248, 0.08)",
+      "cardHover": "0px 6px 20px rgba(56, 189, 248, 0.14)"
+    },
+    "borders": {
+      "divider": "1px solid #E0F2FE"
+    }
+  },
+  "cssVariables": {
+    "--color-primary": "#38bdf8",
+    "--color-primary-hover": "#7dd3fc",
+    "--color-background": "#f0f9ff",
+    "--color-surface": "#ffffff",
+    "--color-surface-alt": "#e0f2fe",
+    "--color-text-main": "#0c4a6e",
+    "--color-text-muted": "#0369a1",
+    "--radius-input": "8px",
+    "--radius-card": "12px",
+    "--radius-modal": "16px",
+    "--shadow-soft": "0px 4px 16px rgba(56, 189, 248, 0.08)"
+  },
+  "tailwindConfig": {
+    "theme": {
+      "extend": {
+        "colors": {
+          "brand": {
+            "50": "#f0f9ff",
+            "100": "#e0f2fe",
+            "200": "#bae6fd",
+            "300": "#7dd3fc",
+            "400": "#38bdf8",
+            "500": "#0ea5e9",
+            "600": "#0284c7",
+            "700": "#0369a1",
+            "800": "#075985",
+            "900": "#0c4a6e"
+          }
+        },
+        "fontFamily": {
+          "sans": [
+            "Plus Jakarta Sans",
+            "Inter",
+            "sans-serif"
+          ]
+        },
+        "borderRadius": {
+          "card": "12px",
+          "modal": "16px"
+        }
+      }
+    }
+  }
+}

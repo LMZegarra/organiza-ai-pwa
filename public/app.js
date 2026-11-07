@@ -26,8 +26,21 @@ const badgeNoteCount = document.getElementById('badgeNoteCount');
 const taskListElement = document.getElementById('taskListElement');
 const selectCategoryFilter = document.getElementById('selectCategoryFilter');
 const selectStatusFilter = document.getElementById('selectStatusFilter');
+const filterStatusGroup = document.getElementById('filterStatusGroup');
 const btnQuickAddTask = document.getElementById('btnQuickAddTask');
 const btnClearAllTasks = document.getElementById('btnClearAllTasks');
+
+// Elementos de Modo de Vista y Tablero Kanban
+const btnViewList = document.getElementById('btnViewList');
+const btnViewKanban = document.getElementById('btnViewKanban');
+const kanbanBoardElement = document.getElementById('kanbanBoardElement');
+const badgeKanbanPending = document.getElementById('badgeKanbanPending');
+const badgeKanbanInProgress = document.getElementById('badgeKanbanInProgress');
+const badgeKanbanCompleted = document.getElementById('badgeKanbanCompleted');
+const kanbanPendingZone = document.getElementById('kanbanPendingZone');
+const kanbanInProgressZone = document.getElementById('kanbanInProgressZone');
+const kanbanCompletedZone = document.getElementById('kanbanCompletedZone');
+let currentTasksViewMode = localStorage.getItem('organiza_tasks_view_mode') || 'list';
 
 const notesContainer = document.getElementById('notesContainer');
 const btnClearNotes = document.getElementById('btnClearNotes');
@@ -44,6 +57,7 @@ const btnSettings = document.getElementById('btnSettings');
 const btnCloseModal = document.getElementById('btnCloseModal');
 const btnDismissModal = document.getElementById('btnDismissModal');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
+const selectAppTheme = document.getElementById('selectAppTheme');
 const inputCustomOpenRouterKey = document.getElementById('inputCustomOpenRouterKey');
 const keyStatusBanner = document.getElementById('keyStatusBanner');
 const keyStatusText = document.getElementById('keyStatusText');
@@ -282,8 +296,202 @@ function renderTasks() {
   });
 }
 
-selectCategoryFilter.addEventListener('change', renderTasks);
+selectCategoryFilter.addEventListener('change', () => {
+  renderTasks();
+  if (currentTasksViewMode === 'kanban') renderKanban();
+});
 selectStatusFilter.addEventListener('change', renderTasks);
+
+// -------------------------------------------------------------
+// Tablero Kanban y Drag & Drop Interactivo (Fase 2)
+// -------------------------------------------------------------
+function setTaskViewMode(mode) {
+  currentTasksViewMode = mode;
+  localStorage.setItem('organiza_tasks_view_mode', mode);
+
+  if (mode === 'kanban') {
+    btnViewList?.classList.remove('active');
+    btnViewKanban?.classList.add('active');
+    taskListElement?.classList.add('hidden');
+    kanbanBoardElement?.classList.remove('hidden');
+    filterStatusGroup?.classList.add('hidden');
+    renderKanban();
+  } else {
+    btnViewKanban?.classList.remove('active');
+    btnViewList?.classList.add('active');
+    kanbanBoardElement?.classList.add('hidden');
+    taskListElement?.classList.remove('hidden');
+    filterStatusGroup?.classList.remove('hidden');
+    renderTasks();
+  }
+}
+
+if (btnViewList) btnViewList.addEventListener('click', () => setTaskViewMode('list'));
+if (btnViewKanban) btnViewKanban.addEventListener('click', () => setTaskViewMode('kanban'));
+
+function moveTaskToStatus(taskId, targetStatus) {
+  const allTasks = storage.getTasks();
+  const task = allTasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  if (targetStatus === 'completed') {
+    task.completed = true;
+    task.status = 'completed';
+    showToast('✅ ¡Tarea completada!');
+  } else if (targetStatus === 'in_progress') {
+    task.completed = false;
+    task.status = 'in_progress';
+    showToast('⚡ Tarea en curso');
+  } else {
+    task.completed = false;
+    task.status = 'pending';
+    showToast('⏳ Tarea en Por Hacer');
+  }
+
+  storage.saveTask(task);
+}
+
+function renderKanbanCard(task, currentStatus) {
+  const card = document.createElement('div');
+  card.className = 'kanban-card';
+  card.draggable = true;
+  card.dataset.id = task.id;
+
+  // Botones de movimiento rápido según la columna actual
+  let shiftActions = '';
+  if (currentStatus === 'pending') {
+    shiftActions = `
+      <button class="btn-kanban-shift btn-shift-in-progress" data-id="${task.id}" title="Pasar a En Curso">⚡ Iniciar</button>
+      <button class="btn-kanban-shift btn-shift-completed" data-id="${task.id}" title="Marcar completada">✅ Completar</button>
+    `;
+  } else if (currentStatus === 'in_progress') {
+    shiftActions = `
+      <button class="btn-kanban-shift btn-shift-pending" data-id="${task.id}" title="Volver a Por Hacer">⏳ Espera</button>
+      <button class="btn-kanban-shift btn-shift-completed" data-id="${task.id}" title="Marcar completada">✅ Completar</button>
+    `;
+  } else if (currentStatus === 'completed') {
+    shiftActions = `
+      <button class="btn-kanban-shift btn-shift-pending" data-id="${task.id}" title="Reabrir tarea">↩️ Reabrir</button>
+    `;
+  }
+
+  card.innerHTML = `
+    <div class="kanban-card-title">${task.title}</div>
+    <div class="kanban-card-meta">
+      <span class="category-tag">${task.category || 'General'}</span>
+      <span class="task-priority priority-${task.priority || 'media'}">${task.priority || 'media'}</span>
+      ${task.due_date ? `<span class="task-due">📅 ${task.due_date}</span>` : ''}
+    </div>
+    <div class="kanban-card-actions">
+      <div class="kanban-move-btns">
+        ${shiftActions}
+      </div>
+      <div class="task-actions">
+        <button class="btn-icon-action btn-edit-kanban-task" data-id="${task.id}" title="Editar tarea">✏️</button>
+        <button class="btn-icon-danger btn-delete-kanban-task" data-id="${task.id}" title="Eliminar tarea">🗑️</button>
+      </div>
+    </div>
+  `;
+
+  // Drag and drop nativo
+  card.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/plain', task.id);
+    e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('dragging');
+  });
+
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+  });
+
+  // Eventos de botones táctiles
+  card.querySelector('.btn-shift-in-progress')?.addEventListener('click', () => moveTaskToStatus(task.id, 'in_progress'));
+  card.querySelector('.btn-shift-completed')?.addEventListener('click', () => moveTaskToStatus(task.id, 'completed'));
+  card.querySelector('.btn-shift-pending')?.addEventListener('click', () => moveTaskToStatus(task.id, 'pending'));
+
+  card.querySelector('.btn-edit-kanban-task')?.addEventListener('click', () => {
+    taskModalHeading.textContent = '✏️ Editar Tarea';
+    taskModalId.value = task.id;
+    taskModalTitle.value = task.title;
+    taskModalCategory.value = task.category || 'General';
+    taskModalPriority.value = task.priority || 'media';
+    taskModalDueDate.value = task.due_date || '';
+    dialogTaskModal.showModal();
+  });
+
+  card.querySelector('.btn-delete-kanban-task')?.addEventListener('click', () => {
+    if (confirm(`¿Eliminar la tarea "${task.title}"?`)) {
+      storage.deleteTask(task.id);
+      showToast('🗑️ Tarea eliminada');
+    }
+  });
+
+  return card;
+}
+
+function initKanbanDropZone(zoneElement, status) {
+  if (!zoneElement) return;
+
+  zoneElement.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    zoneElement.classList.add('drag-over');
+  });
+
+  zoneElement.addEventListener('dragleave', () => {
+    zoneElement.classList.remove('drag-over');
+  });
+
+  zoneElement.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zoneElement.classList.remove('drag-over');
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (taskId) {
+      moveTaskToStatus(taskId, status);
+    }
+  });
+}
+
+function renderKanban() {
+  if (!kanbanBoardElement) return;
+
+  const allTasks = storage.getTasks();
+  badgeTaskCount.textContent = allTasks.filter(t => !t.completed).length;
+
+  const categoryFilter = selectCategoryFilter ? selectCategoryFilter.value : 'all';
+  let filtered = allTasks;
+  if (categoryFilter !== 'all') {
+    filtered = filtered.filter(t => t.category === categoryFilter);
+  }
+
+  const pendingList = filtered.filter(t => !t.completed && (t.status === 'pending' || !t.status));
+  const inProgressList = filtered.filter(t => !t.completed && t.status === 'in_progress');
+  const completedList = filtered.filter(t => t.completed || t.status === 'completed');
+
+  if (badgeKanbanPending) badgeKanbanPending.textContent = pendingList.length;
+  if (badgeKanbanInProgress) badgeKanbanInProgress.textContent = inProgressList.length;
+  if (badgeKanbanCompleted) badgeKanbanCompleted.textContent = completedList.length;
+
+  // Limpiar zonas de tarjetas
+  if (kanbanPendingZone) kanbanPendingZone.innerHTML = '';
+  if (kanbanInProgressZone) kanbanInProgressZone.innerHTML = '';
+  if (kanbanCompletedZone) kanbanCompletedZone.innerHTML = '';
+
+  pendingList.forEach(task => kanbanPendingZone?.appendChild(renderKanbanCard(task, 'pending')));
+  inProgressList.forEach(task => kanbanInProgressZone?.appendChild(renderKanbanCard(task, 'in_progress')));
+  completedList.forEach(task => kanbanCompletedZone?.appendChild(renderKanbanCard(task, 'completed')));
+
+  // Indicadores vacíos si no hay tareas
+  if (pendingList.length === 0 && kanbanPendingZone) {
+    kanbanPendingZone.innerHTML = '<div style="text-align:center; padding:16px; font-size:0.75rem; color:var(--text-muted); font-style:italic;">Sin tareas pendientes</div>';
+  }
+  if (inProgressList.length === 0 && kanbanInProgressZone) {
+    kanbanInProgressZone.innerHTML = '<div style="text-align:center; padding:16px; font-size:0.75rem; color:var(--text-muted); font-style:italic;">Arrastra aquí o pulsa Iniciar</div>';
+  }
+  if (completedList.length === 0 && kanbanCompletedZone) {
+    kanbanCompletedZone.innerHTML = '<div style="text-align:center; padding:16px; font-size:0.75rem; color:var(--text-muted); font-style:italic;">Sin tareas completadas</div>';
+  }
+}
 
 // Modal Tarea: Abrir para nueva tarea
 btnQuickAddTask.addEventListener('click', () => {
@@ -497,11 +705,35 @@ btnClearHistory.addEventListener('click', () => {
 });
 
 // -------------------------------------------------------------
+// Controlador de Tema Visual (design-tokens.json: Soft Blue / Oscuro Celeste)
+// -------------------------------------------------------------
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('organiza_theme', theme);
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', theme === 'dark' ? '#08101c' : '#f0f9ff');
+  }
+}
+
+// Inicializar listener de cambio de tema con vista previa en vivo
+if (selectAppTheme) {
+  selectAppTheme.addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+}
+
+// -------------------------------------------------------------
 // Modal de Ajustes (Native <dialog>)
 // -------------------------------------------------------------
 function loadSettingsIntoDialog() {
   const customKey = localStorage.getItem('custom_openrouter_key') || '';
   inputCustomOpenRouterKey.value = customKey;
+
+  const currentTheme = localStorage.getItem('organiza_theme') || 'light';
+  if (selectAppTheme) {
+    selectAppTheme.value = currentTheme;
+  }
 
   if (customKey) {
     keyStatusText.textContent = 'Usando tu API Key personalizada';
@@ -532,7 +764,11 @@ btnSaveSettings.addEventListener('click', () => {
     localStorage.removeItem('custom_openrouter_key');
   }
 
-  alert('Ajustes guardados correctamente.');
+  if (selectAppTheme) {
+    applyTheme(selectAppTheme.value);
+  }
+
+  showToast('⚙️ Ajustes guardados correctamente');
   closeSettingsDialog();
 });
 
@@ -705,6 +941,9 @@ if (SupabaseService.isConfigured()) {
 // -------------------------------------------------------------
 storage.subscribe(() => {
   renderTasks();
+  if (currentTasksViewMode === 'kanban') {
+    renderKanban();
+  }
   renderNotes();
   renderHistory();
   updateSyncBadge();
@@ -730,9 +969,21 @@ if (btnClearAllTasks) {
   });
 }
 
-// Carga Inicial
+// Inicialización de Zonas Drag & Drop de Kanban
+if (kanbanPendingZone) initKanbanDropZone(kanbanPendingZone, 'pending');
+if (kanbanInProgressZone) initKanbanDropZone(kanbanInProgressZone, 'in_progress');
+if (kanbanCompletedZone) initKanbanDropZone(kanbanCompletedZone, 'completed');
+
+// Carga Inicial de Tema y Vistas
+const initialTheme = localStorage.getItem('organiza_theme') || 'light';
+applyTheme(initialTheme);
+if (selectAppTheme) {
+  selectAppTheme.value = initialTheme;
+}
+
 updateSyncBadge();
 renderTasks();
+setTaskViewMode(currentTasksViewMode);
 renderNotes();
 renderHistory();
 

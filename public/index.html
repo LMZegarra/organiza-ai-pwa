@@ -3,11 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#4f46e5">
+  <meta name="theme-color" content="#f0f9ff">
+  <meta name="color-scheme" content="light dark">
   <title>OrganizaAI - Texto a Tareas y Calendario</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <!-- Tipografía moderna Google Fonts: Plus Jakarta Sans e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <!-- Script anti-FOUC para persistencia de tema (Soft Blue por defecto / Oscuro Celeste) -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('organiza_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        var metaTheme = document.querySelector('meta[name="theme-color"]');
+        if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#08101c' : '#f0f9ff');
+      } catch (e) {}
+    })();
+  </script>
   <!-- Supabase JS Client vía CDN oficial para sincronización en tiempo real -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -41,7 +57,19 @@
           <button id="btnCloseModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
 
-        <div class="settings-content-single" style="display:flex; flex-direction:column; gap:10px;">
+        <div class="settings-content-single" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Selector de Tema Visual (design-tokens.json) -->
+          <div class="settings-theme-group">
+            <label class="modal-label" for="selectAppTheme">🎨 Tema Visual:</label>
+            <select id="selectAppTheme" class="styled-input">
+              <option value="light">🌤️ Soft Blue (Claro y Relajante - Por defecto)</option>
+              <option value="dark">🌙 Oscuro Celeste (Fondo Noche con toques Celestes)</option>
+            </select>
+            <small class="help-text">Elige tu experiencia visual preferida.</small>
+          </div>
+
+          <hr class="settings-divider" />
+
           <div class="sync-badge" id="keyStatusBanner" style="align-self:flex-start;">
             <span class="sync-dot"></span> <span id="keyStatusText">Usando OpenRouter por defecto</span>
           </div>
@@ -269,8 +297,14 @@
       <!-- VISTA 2: Lista de Tareas y Filtros -->
       <section id="viewTasks" class="view-panel">
         <div class="tasks-toolbar">
+          <!-- Conmutador de modo de vista: Lista vs Kanban -->
+          <div class="tasks-view-mode-toggle" role="group" aria-label="Modo de vista">
+            <button id="btnViewList" class="btn-mode-toggle active" type="button" title="Vista de lista">📋 Lista</button>
+            <button id="btnViewKanban" class="btn-mode-toggle" type="button" title="Vista de tablero Kanban">🗂️ Kanban</button>
+          </div>
+
           <div class="filter-group">
-            <label class="filter-label">Categoría:</label>
+            <label class="filter-label" for="selectCategoryFilter">Categoría:</label>
             <select id="selectCategoryFilter" class="filter-select">
               <option value="all">Todas</option>
               <option value="Trabajo">💼 Trabajo</option>
@@ -281,8 +315,8 @@
               <option value="General">📌 General</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label class="filter-label">Estado:</label>
+          <div class="filter-group" id="filterStatusGroup">
+            <label class="filter-label" for="selectStatusFilter">Estado:</label>
             <select id="selectStatusFilter" class="filter-select">
               <option value="pending">Pendientes</option>
               <option value="completed">Completadas</option>
@@ -295,7 +329,44 @@
           </div>
         </div>
 
+        <!-- Vista 2A: Lista de Tareas -->
         <ul id="taskListElement" class="tasks-list"></ul>
+
+        <!-- Vista 2B: Tablero Kanban (Columnas: Por Hacer, En Curso, Completadas) -->
+        <div id="kanbanBoardElement" class="kanban-board hidden">
+          <div class="kanban-column" data-status="pending">
+            <div class="kanban-col-header">
+              <div class="kanban-col-title-wrap">
+                <span class="kanban-col-dot pending"></span>
+                <span class="kanban-col-title">Por Hacer</span>
+              </div>
+              <span class="kanban-col-badge" id="badgeKanbanPending">0</span>
+            </div>
+            <div class="kanban-cards-zone" id="kanbanPendingZone" data-status="pending"></div>
+          </div>
+
+          <div class="kanban-column" data-status="in_progress">
+            <div class="kanban-col-header">
+              <div class="kanban-col-title-wrap">
+                <span class="kanban-col-dot in_progress"></span>
+                <span class="kanban-col-title">En Curso / Hoy</span>
+              </div>
+              <span class="kanban-col-badge" id="badgeKanbanInProgress">0</span>
+            </div>
+            <div class="kanban-cards-zone" id="kanbanInProgressZone" data-status="in_progress"></div>
+          </div>
+
+          <div class="kanban-column" data-status="completed">
+            <div class="kanban-col-header">
+              <div class="kanban-col-title-wrap">
+                <span class="kanban-col-dot completed"></span>
+                <span class="kanban-col-title">Completadas</span>
+              </div>
+              <span class="kanban-col-badge" id="badgeKanbanCompleted">0</span>
+            </div>
+            <div class="kanban-cards-zone" id="kanbanCompletedZone" data-status="completed"></div>
+          </div>
+        </div>
       </section>
 
       <!-- VISTA 3: Ideas y Notas Rápidas -->

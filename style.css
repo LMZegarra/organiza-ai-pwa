@@ -1,30 +1,77 @@
-:root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: rgba(79, 70, 229, 0.15);
-  --bg-dark: #0f172a;
-  --card-bg: #1e293b;
-  --card-hover: #283548;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: #334155;
+:root, [data-theme="light"] {
+  color-scheme: light;
+
+  /* Design Tokens: Calm, Productivity & Soft Blue (design-tokens.json) */
+  --bg-dark: #f0f9ff;
+  --card-bg: #ffffff;
+  --card-hover: #e0f2fe;
+  --input-bg: #ffffff;
+  --input-border: #bae6fd;
+  --text-main: #0c4a6e;
+  --text-muted: #0369a1;
+  --border: #bae6fd;
+  --border-subtle: #e0f2fe;
+
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-light: #e0f2fe;
+  --primary-accent: #38bdf8;
+  --primary-text: #ffffff;
+
   --danger: #ef4444;
-  --danger-light: rgba(239, 68, 68, 0.15);
+  --danger-light: rgba(239, 68, 68, 0.12);
   --success: #10b981;
-  --success-light: rgba(16, 185, 129, 0.15);
-  --warning: #f59e0b;
-  --warning-light: rgba(245, 158, 11, 0.15);
-  --info: #0ea5e9;
+  --success-light: rgba(16, 185, 129, 0.12);
+  --warning: #d97706;
+  --warning-light: rgba(245, 158, 11, 0.12);
+  --info: #0284c7;
+
+  --shadow-soft: 0px 4px 16px rgba(56, 189, 248, 0.10);
+  --shadow-card-hover: 0px 6px 20px rgba(56, 189, 248, 0.16);
+
   --radius-lg: 16px;
-  --radius-md: 10px;
-  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --radius-full: 9999px;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Versión Oscura con detalles en Celeste */
+  --bg-dark: #08101c;
+  --card-bg: #0f1e33;
+  --card-hover: #162c49;
+  --input-bg: #0a1524;
+  --input-border: #1e3a5f;
+  --text-main: #f0f9ff;
+  --text-muted: #7dd3fc;
+  --border: #1e3a5f;
+  --border-subtle: #13263d;
+
+  --primary: #38bdf8;
+  --primary-hover: #7dd3fc;
+  --primary-light: rgba(56, 189, 248, 0.18);
+  --primary-accent: #38bdf8;
+  --primary-text: #08101c;
+
+  --danger: #f87171;
+  --danger-light: rgba(239, 68, 68, 0.2);
+  --success: #34d399;
+  --success-light: rgba(16, 185, 129, 0.2);
+  --warning: #fbbf24;
+  --warning-light: rgba(245, 158, 11, 0.2);
+  --info: #38bdf8;
+
+  --shadow-soft: 0px 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0px 6px 24px rgba(56, 189, 248, 0.16);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -136,7 +183,8 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.2s;
 }
 
 .input-label {
@@ -147,7 +195,7 @@ h1 {
 
 .smart-textarea {
   width: 100%;
-  background: #0f172a;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-main);
@@ -189,7 +237,7 @@ h1 {
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
-  transition: transform 0.1s, background-color 0.2s;
+  transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
 }
 
 .btn:active {
@@ -198,7 +246,8 @@ h1 {
 
 .btn-primary {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--primary-text);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
 }
 
 .btn-primary:hover {
@@ -206,18 +255,19 @@ h1 {
 }
 
 .btn-secondary {
-  background: var(--border);
+  background: var(--card-hover);
   color: var(--text-main);
 }
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--primary);
+  border: 1px solid var(--border);
   color: var(--text-main);
 }
 
 .btn-outline:hover {
   background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 .btn-sm {
@@ -254,7 +304,7 @@ h1 {
 }
 
 .chip-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--card-hover);
   border: 1px solid var(--border);
   color: var(--text-muted);
   border-radius: 14px;
@@ -265,7 +315,7 @@ h1 {
 }
 
 .chip-btn:hover {
-  background: var(--card-hover);
+  background: var(--primary-light);
   color: var(--text-main);
   border-color: var(--primary);
 }
@@ -281,12 +331,13 @@ h1 {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   text-align: center;
+  box-shadow: var(--shadow-soft);
 }
 
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: 3px solid var(--border);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -304,6 +355,7 @@ h1 {
   border-radius: var(--radius-md);
   padding: 4px;
   gap: 4px;
+  box-shadow: var(--shadow-soft);
 }
 
 .view-tab {
@@ -325,8 +377,8 @@ h1 {
 
 .view-tab.active {
   background: var(--primary);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  color: var(--primary-text);
+  box-shadow: var(--shadow-soft);
 }
 
 /* View Panels */
@@ -383,7 +435,7 @@ h1 {
   width: 38px;
   height: 38px;
   border-radius: var(--radius-md);
-  background: #0f172a;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   color: var(--text-main);
   font-size: 1rem;
@@ -391,6 +443,11 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s;
+}
+
+.cal-nav-btn:hover {
+  background: var(--card-hover);
 }
 
 .cal-weekdays {
@@ -412,8 +469,8 @@ h1 {
 
 .cal-day {
   aspect-ratio: 1;
-  background: #0f172a;
-  border: 1px solid transparent;
+  background: var(--input-bg);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-main);
   display: flex;
@@ -430,11 +487,12 @@ h1 {
 
 .cal-day:hover {
   background: var(--card-hover);
-  border-color: var(--border);
+  border-color: var(--primary);
 }
 
 .cal-day.other-month {
-  color: #475569;
+  color: var(--text-muted);
+  opacity: 0.35;
   background: transparent;
   cursor: default;
 }
@@ -447,9 +505,9 @@ h1 {
 
 .cal-day.selected {
   background: var(--primary);
-  color: #fff !important;
+  color: var(--primary-text) !important;
   font-weight: 700;
-  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.5);
+  box-shadow: var(--shadow-soft);
 }
 
 .cal-dots {
@@ -512,7 +570,7 @@ h1 {
   text-align: center;
   color: var(--text-muted);
   font-size: 0.85rem;
-  background: #0f172a;
+  background: var(--card-hover);
   border-radius: var(--radius-md);
 }
 
@@ -527,17 +585,18 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #0f172a;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 10px 14px;
+  box-shadow: var(--shadow-soft);
 }
 
 .event-time-badge {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--info);
-  background: rgba(14, 165, 233, 0.12);
+  background: var(--primary-light);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -579,11 +638,12 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #0f172a;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 8px 12px;
   font-size: 0.85rem;
+  box-shadow: var(--shadow-soft);
 }
 
 .agenda-task-item.completed .task-title {
@@ -602,6 +662,35 @@ h1 {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 10px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Conmutador de Vistas (Lista / Kanban) */
+.tasks-view-mode-toggle {
+  display: inline-flex;
+  background: var(--card-hover);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.btn-mode-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-mode-toggle.active {
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .filter-group {
@@ -616,7 +705,7 @@ h1 {
 }
 
 .filter-select {
-  background: #0f172a;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--text-main);
   padding: 5px 8px;
@@ -640,11 +729,13 @@ h1 {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 12px;
-  transition: border-color 0.2s;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .task-card:hover {
   border-color: var(--primary);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .task-card.completed {
@@ -685,7 +776,7 @@ h1 {
 }
 
 .category-tag {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--card-hover);
   padding: 2px 7px;
   border-radius: 4px;
   color: var(--text-muted);
@@ -701,22 +792,179 @@ h1 {
 
 .priority-alta {
   background: var(--danger-light);
-  color: #f87171;
+  color: var(--danger);
 }
 
 .priority-media {
   background: var(--warning-light);
-  color: #fbbf24;
+  color: var(--warning);
 }
 
 .priority-baja {
   background: var(--success-light);
-  color: #34d399;
+  color: var(--success);
 }
 
 .task-due {
   color: var(--info);
   font-size: 0.75rem;
+}
+
+/* ---- TABLERO KANBAN ---- */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  align-items: start;
+  width: 100%;
+}
+
+.kanban-column {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 280px;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s;
+}
+
+.kanban-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.kanban-col-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-col-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.kanban-col-dot.pending {
+  background: var(--warning);
+}
+
+.kanban-col-dot.in_progress {
+  background: var(--primary);
+}
+
+.kanban-col-dot.completed {
+  background: var(--success);
+}
+
+.kanban-col-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.kanban-col-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--card-hover);
+  color: var(--text-muted);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.kanban-cards-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 180px;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  transition: background-color 0.2s, outline 0.2s;
+}
+
+.kanban-cards-zone.drag-over {
+  background: var(--primary-light);
+  outline: 2px dashed var(--primary);
+}
+
+.kanban-card {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.kanban-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+}
+
+.kanban-card.dragging {
+  opacity: 0.35;
+  transform: scale(0.96);
+}
+
+.kanban-card-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+
+.kanban-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.kanban-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle);
+  margin-top: 2px;
+}
+
+.kanban-move-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-kanban-shift {
+  background: var(--card-hover);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-size: 0.72rem;
+  padding: 3px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-kanban-shift:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 /* ---- IDEAS & NOTAS GRID ---- */
@@ -742,19 +990,26 @@ h1 {
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.note-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .note-content {
   font-size: 0.88rem;
   line-height: 1.45;
-  color: #e2e8f0;
+  color: var(--text-main);
 }
 
 .note-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--border-subtle);
   padding-top: 8px;
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -796,7 +1051,7 @@ h1 {
 
 .history-raw {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-style: italic;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -814,7 +1069,7 @@ dialog.modal-dialog {
   padding: 0;
   max-width: 520px;
   width: 90vw;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--shadow-card-hover);
   outline: none;
 }
 
@@ -824,7 +1079,7 @@ dialog:modal {
 }
 
 dialog::backdrop {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(8, 16, 28, 0.65);
   backdrop-filter: blur(4px);
   overflow: hidden;
   overscroll-behavior: contain;
@@ -911,7 +1166,7 @@ dialog::backdrop {
 .styled-input, .styled-select {
   width: 100%;
   min-height: 42px;
-  background: #0f172a;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-main);
@@ -922,6 +1177,13 @@ dialog::backdrop {
 
 .styled-input:focus, .styled-select:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 4px 0;
 }
 
 .help-text {
@@ -949,7 +1211,7 @@ dialog::backdrop {
 .test-status-label.error { color: var(--danger); }
 
 .schema-help-box {
-  background: #0f172a;
+  background: var(--card-hover);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 10px 12px;
@@ -988,7 +1250,7 @@ dialog::backdrop {
 .styled-textarea {
   width: 100%;
   box-sizing: border-box;
-  background: #0f172a;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   color: var(--text-main);
   padding: 10px 12px;
@@ -1001,6 +1263,7 @@ dialog::backdrop {
 
 .styled-textarea:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 /* Acciones y Botones Táctiles en Tareas y Notas */
@@ -1023,17 +1286,17 @@ dialog::backdrop {
 
 .btn-icon-action:hover {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--card-hover);
 }
 
 /* Animación y Transición de Tareas Completadas */
 .task-card {
-  transition: border-color 0.2s, opacity 0.25s, transform 0.2s;
+  transition: border-color 0.2s, opacity 0.25s, transform 0.2s, box-shadow 0.2s;
 }
 
 .task-card.completed {
   opacity: 0.6;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--card-bg);
 }
 
 .task-card.completed .task-text {
@@ -1050,11 +1313,12 @@ dialog::backdrop {
 .notes-search-input {
   width: 100%;
   box-sizing: border-box;
-  background: #0f172a;
+  background: var(--input-bg);
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: 0.88rem;
   border: 1px solid var(--border);
+  color: var(--text-main);
 }
 
 .notes-actions {
@@ -1069,12 +1333,12 @@ dialog::backdrop {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #1e293b;
-  color: #f8fafc;
+  background: var(--card-bg);
+  color: var(--text-main);
   border: 1px solid var(--primary);
   padding: 10px 20px;
   border-radius: var(--radius-full);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-card-hover);
   font-size: 0.88rem;
   font-weight: 500;
   display: flex;
@@ -1104,7 +1368,7 @@ dialog::backdrop {
 
 .auth-tabs {
   display: flex;
-  background: #0f172a;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 3px;
@@ -1127,7 +1391,7 @@ dialog::backdrop {
 
 .auth-tab-btn.active {
   background: var(--primary);
-  color: #fff;
+  color: var(--primary-text);
 }
 
 .auth-alert {
@@ -1139,22 +1403,22 @@ dialog::backdrop {
 }
 
 .auth-alert.error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid #ef4444;
-  color: #fca5a5;
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  color: var(--danger);
 }
 
 .auth-alert.success {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid #10b981;
-  color: #6ee7b7;
+  background: var(--success-light);
+  border: 1px solid var(--success);
+  color: var(--success);
 }
 
 .user-profile-card {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #0f172a;
+  background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 14px;
@@ -1162,7 +1426,8 @@ dialog::backdrop {
 
 .user-avatar {
   font-size: 1.8rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--card-hover);
+  color: var(--primary);
   border-radius: 50%;
   width: 44px;
   height: 44px;
@@ -1183,9 +1448,9 @@ dialog::backdrop {
 }
 
 .profile-info-banner {
-  background: rgba(79, 70, 229, 0.1);
-  border: 1px solid rgba(79, 70, 229, 0.3);
-  color: #c7d2fe;
+  background: var(--primary-light);
+  border: 1px solid var(--border);
+  color: var(--text-main);
   padding: 12px 14px;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
@@ -1194,13 +1459,13 @@ dialog::backdrop {
 }
 
 .btn-danger {
-  background: #dc2626;
+  background: var(--danger);
   color: #fff;
   border: none;
 }
 
 .btn-danger:hover {
-  background: #b91c1c;
+  filter: brightness(0.9);
 }
 
 /* Utilidades */
