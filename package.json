@@ -4,7 +4,8 @@
   "description": "App para celular que graba audio, transcribe y genera lista de tareas con IA",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node tests/storage.test.js && node tests/ai-service.test.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

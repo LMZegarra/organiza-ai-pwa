@@ -40,19 +40,82 @@ function toggleTask(id) {
   }
 }
 
+function deleteTask(id) {
+  let tasks = getTasks();
+  tasks = tasks.filter(t => t.id !== id);
+  localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+}
+
+function getNotes() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.NOTES) || '[]');
+}
+
+function saveNote(note) {
+  const notes = getNotes();
+  const idx = notes.findIndex(n => n.id === note.id);
+  if (idx >= 0) notes[idx] = { ...notes[idx], ...note };
+  else notes.unshift(note);
+  localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+}
+
+function updateNote(id, newContent) {
+  const notes = getNotes();
+  const note = notes.find(n => n.id === id);
+  if (note) {
+    note.content = newContent;
+    note.updated_at = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+  }
+}
+
+function deleteNote(id) {
+  let notes = getNotes();
+  notes = notes.filter(n => n.id !== id);
+  localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+}
+
+function searchNotes(query) {
+  const notes = getNotes();
+  if (!query || !query.trim()) return notes;
+  const q = query.toLowerCase().trim();
+  return notes.filter(n => (n.content || '').toLowerCase().includes(q));
+}
+
 console.log('Probando operaciones de Storage...');
 localStorage.clear();
 
-saveTask({ id: 't1', title: 'Comprar café', completed: false });
+// Pruebas de Tareas
+saveTask({ id: 't1', title: 'Comprar café', priority: 'media', category: 'Compras', completed: false });
 assert.strictEqual(getTasks().length, 1);
 assert.strictEqual(getTasks()[0].completed, false);
 
 toggleTask('t1');
 assert.strictEqual(getTasks()[0].completed, true);
 
-// Update existing
-saveTask({ id: 't1', title: 'Comprar café descafeinado' });
+// Update existing task
+saveTask({ id: 't1', title: 'Comprar café descafeinado', priority: 'alta', due_date: '2026-11-10' });
 assert.strictEqual(getTasks()[0].title, 'Comprar café descafeinado');
+assert.strictEqual(getTasks()[0].priority, 'alta');
+assert.strictEqual(getTasks()[0].due_date, '2026-11-10');
 assert.strictEqual(getTasks()[0].completed, true);
+
+deleteTask('t1');
+assert.strictEqual(getTasks().length, 0);
+
+// Pruebas de Notas
+saveNote({ id: 'n1', content: 'Idea para proyecto de inteligencia artificial' });
+saveNote({ id: 'n2', content: 'Recordar comprar baterías AAA' });
+assert.strictEqual(getNotes().length, 2);
+
+updateNote('n1', 'Idea para proyecto de inteligencia artificial en PWA');
+assert.strictEqual(getNotes().find(n => n.id === 'n1').content, 'Idea para proyecto de inteligencia artificial en PWA');
+
+// Búsqueda de Notas
+const searchResults = searchNotes('inteligencia');
+assert.strictEqual(searchResults.length, 1);
+assert.strictEqual(searchResults[0].id, 'n1');
+
+deleteNote('n2');
+assert.strictEqual(getNotes().length, 1);
 
 console.log('✅ Pruebas de StorageService pasaron exitosamente.');

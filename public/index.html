@@ -62,6 +62,73 @@
       </div>
     </dialog>
 
+    <!-- Modal para Crear / Editar Tareas -->
+    <dialog id="dialogTaskModal" class="modal-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h3 id="taskModalHeading">✏️ Tarea</h3>
+          <button id="btnCloseTaskModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
+        </div>
+        <form id="formTaskModal" class="modal-form">
+          <input type="hidden" id="taskModalId" />
+
+          <label class="modal-label" for="taskModalTitle">Título de la tarea:</label>
+          <input type="text" id="taskModalTitle" class="styled-input" placeholder="Ej. Comprar insumos de oficina" required />
+
+          <div class="form-row-2">
+            <div>
+              <label class="modal-label" for="taskModalCategory">Categoría:</label>
+              <select id="taskModalCategory" class="styled-input">
+                <option value="Trabajo">💼 Trabajo</option>
+                <option value="Personal">🏠 Personal</option>
+                <option value="Compras">🛒 Compras</option>
+                <option value="Estudio">📚 Estudio</option>
+                <option value="Salud">💊 Salud</option>
+                <option value="General" selected>📌 General</option>
+              </select>
+            </div>
+            <div>
+              <label class="modal-label" for="taskModalPriority">Prioridad:</label>
+              <select id="taskModalPriority" class="styled-input">
+                <option value="alta">🔴 Alta</option>
+                <option value="media" selected>🟠 Media</option>
+                <option value="baja">🔵 Baja</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="modal-label" for="taskModalDueDate">Fecha Límite (Opcional):</label>
+          <input type="date" id="taskModalDueDate" class="styled-input" />
+
+          <div class="dialog-actions" style="margin-top:16px;">
+            <button id="btnSaveTaskModal" class="btn btn-primary" type="submit">Guardar Tarea</button>
+            <button id="btnDismissTaskModal" class="btn btn-secondary" type="button">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Modal para Crear / Editar Notas e Ideas -->
+    <dialog id="dialogNoteModal" class="modal-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h3 id="noteModalHeading">💡 Nota o Idea</h3>
+          <button id="btnCloseNoteModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
+        </div>
+        <form id="formNoteModal" class="modal-form">
+          <input type="hidden" id="noteModalId" />
+
+          <label class="modal-label" for="noteModalContent">Contenido de la nota:</label>
+          <textarea id="noteModalContent" class="styled-textarea" rows="4" placeholder="Escribe tu pensamiento, idea o apunte..." required></textarea>
+
+          <div class="dialog-actions" style="margin-top:16px;">
+            <button id="btnSaveNoteModal" class="btn btn-primary" type="submit">Guardar Nota</button>
+            <button id="btnDismissNoteModal" class="btn btn-secondary" type="button">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
     <!-- Área de Entrada de Texto Inteligente -->
     <section class="input-card">
       <form id="organizeForm" class="organize-form">
@@ -155,7 +222,19 @@
       <section id="viewNotes" class="view-panel">
         <div class="notes-header">
           <h3>Ideas y Resúmenes Sintetizados</h3>
-          <button id="btnClearNotes" class="btn-link">Limpiar todas</button>
+          <div class="notes-actions">
+            <button id="btnQuickAddNote" class="btn btn-sm btn-outline">+ Nueva Idea</button>
+            <button id="btnClearNotes" class="btn-link">Limpiar todas</button>
+          </div>
+        </div>
+        <div class="notes-toolbar">
+          <input
+            type="search"
+            id="inputSearchNotes"
+            class="styled-input notes-search-input"
+            placeholder="🔍 Buscar en ideas y notas por palabra clave..."
+            aria-label="Buscar en ideas y notas"
+          />
         </div>
         <div id="notesContainer" class="notes-grid"></div>
       </section>

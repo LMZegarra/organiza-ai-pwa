@@ -972,6 +972,126 @@ dialog::backdrop {
   margin-top: 8px;
 }
 
+/* Modales Formularios y Campos Nuevos */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.styled-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f172a;
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.styled-textarea:focus {
+  border-color: var(--primary);
+}
+
+/* Acciones y Botones Táctiles en Tareas y Notas */
+.task-actions, .note-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-icon-action {
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  opacity: 0.75;
+  transition: all 0.15s;
+}
+
+.btn-icon-action:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Animación y Transición de Tareas Completadas */
+.task-card {
+  transition: border-color 0.2s, opacity 0.25s, transform 0.2s;
+}
+
+.task-card.completed {
+  opacity: 0.6;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.task-card.completed .task-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+/* Barra de Búsqueda y Herramientas de Notas */
+.notes-toolbar {
+  margin-bottom: 4px;
+}
+
+.notes-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f172a;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  border: 1px solid var(--border);
+}
+
+.notes-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Toast de Feedback Táctil */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid var(--primary);
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  font-size: 0.88rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1000;
+}
+
+.toast-notification.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Utilidades */
 .hidden {
   display: none !important;
@@ -987,5 +1107,8 @@ dialog::backdrop {
   .view-tab {
     font-size: 0.75rem;
     padding: 4px;
+  }
+  .form-row-2 {
+    grid-template-columns: 1fr;
   }
 }

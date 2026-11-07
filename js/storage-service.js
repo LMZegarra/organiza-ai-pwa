@@ -200,10 +200,30 @@ class StorageService {
 
   saveNote(note) {
     const notes = this.getNotes();
-    notes.unshift(note);
+    const existingIndex = notes.findIndex(n => n.id === note.id);
+    if (existingIndex >= 0) {
+      notes[existingIndex] = { ...notes[existingIndex], ...note, updated_at: new Date().toISOString() };
+    } else {
+      notes.unshift({
+        ...note,
+        created_at: note.created_at || new Date().toISOString()
+      });
+    }
     localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
     this.notify();
     SupabaseService.syncNote(note);
+  }
+
+  updateNote(id, newContent) {
+    const notes = this.getNotes();
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      note.content = newContent;
+      note.updated_at = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+      this.notify();
+      SupabaseService.syncNote(note);
+    }
   }
 
   deleteNote(id) {
