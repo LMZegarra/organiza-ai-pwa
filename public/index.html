@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f0f9ff">
   <meta name="color-scheme" content="light dark">
   <title>OrganizaAI - Texto a Tareas y Calendario</title>
@@ -57,17 +57,17 @@
         </div>
 
         <!-- Pestañas internas de navegación: Ajustes / Cuenta -->
-        <div class="settings-tabs" role="tablist">
-          <button type="button" id="tabSettingsGeneral" class="settings-tab-btn active" role="tab" aria-selected="true">
+        <div class="settings-tabs" role="tablist" aria-label="Secciones de ajustes">
+          <button type="button" id="tabSettingsGeneral" class="settings-tab-btn active" role="tab" aria-selected="true" aria-controls="settingsGeneralPane">
             ⚙️ Ajustes
           </button>
-          <button type="button" id="tabSettingsAccount" class="settings-tab-btn" role="tab" aria-selected="false">
+          <button type="button" id="tabSettingsAccount" class="settings-tab-btn" role="tab" aria-selected="false" aria-controls="settingsAccountPane">
             👤 Cuenta <span id="accountTabBadge" class="account-tab-badge">● Local</span>
           </button>
         </div>
 
         <!-- Panel 1: Ajustes Generales (Tema y API Key) -->
-        <div id="settingsGeneralPane" class="settings-tab-pane">
+        <div id="settingsGeneralPane" class="settings-tab-pane" role="tabpanel" aria-labelledby="tabSettingsGeneral">
           <div class="settings-theme-group">
             <label class="modal-label" for="selectAppTheme">🎨 Tema Visual:</label>
             <select id="selectAppTheme" class="styled-input">
@@ -101,7 +101,7 @@
         </div>
 
         <!-- Panel 2: Cuenta (Autenticación Supabase Auth) -->
-        <div id="settingsAccountPane" class="settings-tab-pane hidden">
+        <div id="settingsAccountPane" class="settings-tab-pane hidden" role="tabpanel" aria-labelledby="tabSettingsAccount">
           <!-- Estado de usuario logueado -->
           <div id="authProfileSection" class="auth-profile-section hidden">
             <div class="user-profile-card">

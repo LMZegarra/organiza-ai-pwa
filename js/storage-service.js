@@ -72,9 +72,9 @@ class StorageService {
       const localNotes = this.getNotes();
 
       await Promise.all([
-        ...localTasks.map(t => SupabaseService.syncTask(t)),
-        ...localEvents.map(e => SupabaseService.syncEvent(e)),
-        ...localNotes.map(n => SupabaseService.syncNote(n))
+        SupabaseService.syncTasksBulk(localTasks),
+        SupabaseService.syncEventsBulk(localEvents),
+        SupabaseService.syncNotesBulk(localNotes)
       ]);
 
       // 2. Traer datos remotos del usuario

@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const upload = multer({
-  dest: '/tmp/voice_uploads',
+  dest: path.join(os.tmpdir(), 'voice_uploads'),
   limits: { fileSize: 25 * 1024 * 1024 }
 });
 

@@ -122,7 +122,7 @@ const authBtnText = document.getElementById('authBtnText') || settingsBtnLabel;
 const dialogAuthModal = document.getElementById('dialogAuthModal') || {
   showModal: () => {
     switchSettingsTab('account');
-    dialogSettings.showModal();
+    openModalAccessible(dialogSettings);
   },
   close: () => dialogSettings.close()
 };
@@ -177,6 +177,25 @@ function showToast(message, duration = 3000, type = 'info') {
 }
 window.showToast = showToast;
 
+// Apertura de modal accesible con captura y retorno automático de foco
+function openModalAccessible(dialog, initialFocusSelector = 'input:not([type="hidden"]), select, textarea, button.btn-primary') {
+  if (!dialog || typeof dialog.showModal !== 'function') return;
+  const previousActiveElement = document.activeElement;
+  dialog.showModal();
+  const firstInteractive = dialog.querySelector(initialFocusSelector);
+  if (firstInteractive) {
+    setTimeout(() => firstInteractive.focus(), 60);
+  }
+  const onDialogClose = () => {
+    dialog.removeEventListener('close', onDialogClose);
+    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+      previousActiveElement.focus();
+    }
+  };
+  dialog.addEventListener('close', onDialogClose);
+}
+window.openModalAccessible = openModalAccessible;
+
 // Diálogo de Confirmación Reutilizable con Alto Contraste (reemplazo de confirm)
 function showConfirmDialog(heading, message, confirmBtnText = 'Eliminar', onConfirm) {
   if (!dialogConfirmModal) {
@@ -202,7 +221,7 @@ function showConfirmDialog(heading, message, confirmBtnText = 'Eliminar', onConf
   btnCancelConfirm.onclick = cleanup;
   btnCloseConfirmModal.onclick = cleanup;
 
-  dialogConfirmModal.showModal();
+  openModalAccessible(dialogConfirmModal, '#btnConfirmAction');
 }
 window.showConfirmDialog = showConfirmDialog;
 
@@ -251,7 +270,7 @@ inputText.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-      if (e.isComposing || e.keyCode === 229) return;
+      if (e.isComposing || e.keyCode === 229 || (btnSubmitText && btnSubmitText.disabled)) return;
       organizeForm.requestSubmit();
     }
   }
@@ -323,7 +342,7 @@ organizeForm.addEventListener('submit', async (e) => {
   } catch (err) {
     console.error('Error al procesar:', err);
     if (err.message.includes('API Key') || err.message.includes('Ajustes')) {
-      dialogSettings.showModal();
+      openModalAccessible(dialogSettings);
     }
     showToast(`⚠️ ${err.message || 'Error al comunicarse con la IA'}`, 4000, 'error');
   } finally {
@@ -396,7 +415,7 @@ function renderTasks() {
       taskModalCategory.value = task.category || 'General';
       taskModalPriority.value = task.priority || 'media';
       taskModalDueDate.value = task.due_date || '';
-      dialogTaskModal.showModal();
+      openModalAccessible(dialogTaskModal);
     });
 
     li.querySelector('.btn-delete-task').addEventListener('click', () => {
@@ -582,7 +601,7 @@ function renderKanbanCard(task, currentStatus) {
     taskModalCategory.value = task.category || 'General';
     taskModalPriority.value = task.priority || 'media';
     taskModalDueDate.value = task.due_date || '';
-    dialogTaskModal.showModal();
+    openModalAccessible(dialogTaskModal);
   });
 
   card.querySelector('.btn-delete-kanban-task')?.addEventListener('click', () => {
@@ -667,7 +686,7 @@ btnQuickAddTask.addEventListener('click', () => {
   taskModalCategory.value = 'General';
   taskModalPriority.value = 'media';
   taskModalDueDate.value = '';
-  dialogTaskModal.showModal();
+  openModalAccessible(dialogTaskModal);
 });
 
 const closeTaskModal = () => dialogTaskModal.close();
@@ -764,7 +783,7 @@ function renderNotes() {
       noteModalHeading.textContent = '✏️ Editar Nota';
       noteModalId.value = note.id;
       noteModalContent.value = content;
-      dialogNoteModal.showModal();
+      openModalAccessible(dialogNoteModal);
     });
 
     card.querySelector('.btn-delete-note').addEventListener('click', () => {
@@ -784,7 +803,7 @@ if (btnQuickAddNote) {
     noteModalHeading.textContent = '💡 Nueva Idea / Nota';
     noteModalId.value = '';
     noteModalContent.value = '';
-    dialogNoteModal.showModal();
+    openModalAccessible(dialogNoteModal);
   });
 }
 
@@ -841,6 +860,23 @@ function renderColorPalette() {
     </button>
   `).join('');
 
+  eventColorPalette.onkeydown = (e) => {
+    const swatches = Array.from(eventColorPalette.querySelectorAll('.color-swatch-btn'));
+    if (!swatches.length) return;
+    const currentIndex = swatches.findIndex(s => s.classList.contains('active'));
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = (currentIndex + 1) % swatches.length;
+      swatches[nextIndex].focus();
+      setSelectedEventColor(swatches[nextIndex].dataset.color);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = (currentIndex - 1 + swatches.length) % swatches.length;
+      swatches[prevIndex].focus();
+      setSelectedEventColor(swatches[prevIndex].dataset.color);
+    }
+  };
+
   eventColorPalette.querySelectorAll('.color-swatch-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       setSelectedEventColor(btn.dataset.color);
@@ -880,7 +916,7 @@ function openEventModal(eventId = null, defaultDate = null) {
       eventModalLocation.value = ev.location || '';
       eventModalDescription.value = ev.description || '';
       setSelectedEventColor(ev.color || EVENT_COLORS[0]);
-      dialogEventModal.showModal();
+      openModalAccessible(dialogEventModal);
       return;
     }
   }
@@ -900,7 +936,7 @@ function openEventModal(eventId = null, defaultDate = null) {
   const nextColor = getNextAvailableEventColor(targetDate, allEvents);
   setSelectedEventColor(nextColor);
 
-  dialogEventModal.showModal();
+  openModalAccessible(dialogEventModal);
 }
 window.openEventModal = openEventModal;
 
@@ -924,6 +960,14 @@ if (formEventModal) {
     const title = eventModalTitle.value.trim();
     const date = eventModalDate.value;
     if (!title || !date) return;
+
+    const startTime = eventModalStartTime.value || null;
+    const endTime = eventModalEndTime.value || null;
+    if (startTime && endTime && endTime < startTime) {
+      showToast('⚠️ La hora de fin debe ser posterior a la de inicio', 3500, 'error');
+      eventModalEndTime.focus();
+      return;
+    }
 
     const id = eventModalId.value;
     const color = eventModalColor ? (eventModalColor.value || EVENT_COLORS[0]) : EVENT_COLORS[0];
@@ -1063,7 +1107,7 @@ if (tabSettingsAccount) tabSettingsAccount.addEventListener('click', () => switc
 btnSettings.addEventListener('click', () => {
   loadSettingsIntoDialog();
   clearAuthAlert();
-  dialogSettings.showModal();
+  openModalAccessible(dialogSettings);
 });
 
 const closeSettingsDialog = () => {
@@ -1139,7 +1183,7 @@ if (btnAuthHeader) {
   btnAuthHeader.addEventListener('click', () => {
     switchSettingsTab('account');
     clearAuthAlert();
-    dialogSettings.showModal();
+    openModalAccessible(dialogSettings);
   });
 }
 

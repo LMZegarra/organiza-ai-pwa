@@ -5,6 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "sync-public": "node scripts/sync-public.js",
+    "build": "node scripts/sync-public.js",
     "test": "node tests/storage.test.js && node tests/ai-service.test.js"
   },
   "dependencies": {
