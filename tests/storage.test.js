@@ -57,7 +57,7 @@ function deleteTask(id) {
 }
 
 const EVENT_COLORS = [
-  '#0284c7', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
   '#ec4899', '#06b6d4', '#84cc16', '#6366f1', '#ea580c'
 ];
 
@@ -190,13 +190,13 @@ assert.strictEqual(getNotes().length, 1);
 // Pruebas de Eventos y Colores Distintos por Día
 saveEvent({ id: 'e1', title: 'Reunión Matutina', date: '2026-11-15', start_time: '09:00' });
 assert.strictEqual(getEvents().length, 1);
-assert.strictEqual(getEvents()[0].color, '#0284c7'); // Primer color por defecto
+assert.strictEqual(getEvents()[0].color, '#2563eb'); // Primer color por defecto
 
 // 2do evento en el mismo día debe recibir un color distinto automáticamente
 saveEvent({ id: 'e2', title: 'Almuerzo de Equipo', date: '2026-11-15', start_time: '13:00' });
 assert.strictEqual(getEvents().length, 2);
 const ev2 = getEvents().find(e => e.id === 'e2');
-assert.notStrictEqual(ev2.color, '#0284c7'); // Color distinto al primero
+assert.notStrictEqual(ev2.color, '#2563eb'); // Color distinto al primero
 assert.strictEqual(ev2.color, '#10b981'); // Segundo color de la paleta
 
 // 3er evento en el mismo día debe recibir el tercer color distinto

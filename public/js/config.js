@@ -13,9 +13,9 @@ try {
 }
 
 export const APP_CONFIG = {
-  // Supabase (Proyecto en la nube activo)
-  SUPABASE_URL: localConfig.SUPABASE_URL || 'https://vhxprfbexizxpllaqeqk.supabase.co',
-  SUPABASE_ANON_KEY: localConfig.SUPABASE_ANON_KEY || 'sb_publishable_F2dl38sLX9IfudFb6xK-jA_FpzBTWsQ',
+  // Supabase (Configurable en Ajustes o vía config.local.js)
+  SUPABASE_URL: localConfig.SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: localConfig.SUPABASE_ANON_KEY || '',
 
   // OpenRouter (Credencial por defecto: desde config.local.js o servidor)
   DEFAULT_OPENROUTER_KEY: localConfig.OPENROUTER_API_KEY || '',

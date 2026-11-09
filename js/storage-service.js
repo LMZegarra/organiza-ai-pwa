@@ -1,12 +1,12 @@
 /**
  * storage-service.js
- * Almacenamiento local-first con sincronización automática a Supabase.
+ * Almacenamiento local-first con sincronización automática a Supabase y cola de borrado offline (anti-zombies).
  */
 
 import { SupabaseService } from './supabase-client.js';
 
 export const EVENT_PALETTE = [
-  { hex: '#0284c7', name: 'Azul Celeste' },
+  { hex: '#2563eb', name: 'Azul Real' },
   { hex: '#10b981', name: 'Verde Esmeralda' },
   { hex: '#f59e0b', name: 'Ámbar Dorado' },
   { hex: '#ef4444', name: 'Rojo Coral' },
@@ -33,7 +33,8 @@ const STORAGE_KEYS = {
   TASKS: 'organiza_local_tasks',
   EVENTS: 'organiza_local_events',
   NOTES: 'organiza_local_notes',
-  HISTORY: 'organiza_local_history'
+  HISTORY: 'organiza_local_history',
+  PENDING_DELETIONS: 'organiza_pending_deletions'
 };
 
 class StorageService {
@@ -43,6 +44,13 @@ class StorageService {
   }
 
   init() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        console.log('[Storage] Dispositivo volvió a estar online. Sincronizando pendientes...');
+        this.syncWithCloud();
+      });
+    }
+
     if (SupabaseService.isConfigured()) {
       this.syncWithCloud();
     }
@@ -59,6 +67,45 @@ class StorageService {
     });
   }
 
+  // ---- COLA DE ELIMINACIONES OFFLINE (Evita resurrección de datos) ----
+  getPendingDeletions() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.PENDING_DELETIONS) || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  addPendingDeletion(type, id) {
+    const list = this.getPendingDeletions();
+    if (!list.some(item => item.type === type && item.id === id)) {
+      list.push({ type, id, timestamp: Date.now() });
+      localStorage.setItem(STORAGE_KEYS.PENDING_DELETIONS, JSON.stringify(list));
+    }
+  }
+
+  removePendingDeletion(type, id) {
+    let list = this.getPendingDeletions();
+    list = list.filter(item => !(item.type === type && item.id === id));
+    localStorage.setItem(STORAGE_KEYS.PENDING_DELETIONS, JSON.stringify(list));
+  }
+
+  async flushPendingDeletions() {
+    const pending = this.getPendingDeletions();
+    if (!pending.length || !SupabaseService.isConfigured()) return;
+
+    for (const item of pending) {
+      try {
+        if (item.type === 'task') await SupabaseService.deleteTask(item.id);
+        else if (item.type === 'event') await SupabaseService.deleteEvent(item.id);
+        else if (item.type === 'note') await SupabaseService.deleteNote(item.id);
+        this.removePendingDeletion(item.type, item.id);
+      } catch (err) {
+        console.warn(`[Storage] No se pudo purgar eliminación de ${item.type} ${item.id}:`, err);
+      }
+    }
+  }
+
   async syncWithCloud() {
     if (!SupabaseService.isConfigured()) return;
 
@@ -66,34 +113,43 @@ class StorageService {
       const user = await SupabaseService.getCurrentUser();
       if (!user) return; // Si no hay sesión activa, mantener en almacenamiento local seguro
 
-      // 1. Subir elementos locales a la cuenta de usuario en Supabase (esperando que terminen todos)
+      // 1. Purgar eliminaciones pendientes antes de traer datos remotos
+      await this.flushPendingDeletions();
+
+      // 2. Subir elementos locales a la cuenta de usuario en Supabase
       const localTasks = this.getTasks();
       const localEvents = this.getEvents();
       const localNotes = this.getNotes();
 
       await Promise.all([
-        ...localTasks.map(t => SupabaseService.syncTask(t)),
-        ...localEvents.map(e => SupabaseService.syncEvent(e)),
-        ...localNotes.map(n => SupabaseService.syncNote(n))
+        SupabaseService.syncTasksBulk(localTasks),
+        SupabaseService.syncEventsBulk(localEvents),
+        SupabaseService.syncNotesBulk(localNotes)
       ]);
 
-      // 2. Traer datos remotos del usuario
+      // 3. Traer datos remotos del usuario
       const remote = await SupabaseService.fetchAllRemote();
       if (!remote) return;
 
+      // Filtrar elementos remotos que sigan pendientes de eliminación local
+      const pendingDeletions = new Set(this.getPendingDeletions().map(d => `${d.type}_${d.id}`));
+
       if (Array.isArray(remote.tasks)) {
-        localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(remote.tasks));
+        const cleanTasks = remote.tasks.filter(t => !pendingDeletions.has(`task_${t.id}`));
+        localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(cleanTasks));
       }
       if (Array.isArray(remote.calendar_events)) {
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(remote.calendar_events));
+        const cleanEvents = remote.calendar_events.filter(e => !pendingDeletions.has(`event_${e.id}`));
+        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(cleanEvents));
       }
       if (Array.isArray(remote.notes)) {
-        localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(remote.notes));
+        const cleanNotes = remote.notes.filter(n => !pendingDeletions.has(`note_${n.id}`));
+        localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(cleanNotes));
       }
 
       this.notify();
 
-      // 3. Suscribirse a cambios en tiempo real
+      // 4. Suscribirse a cambios en tiempo real
       SupabaseService.setupRealtime((type, payload) => {
         this.handleRealtimeEvent(type, payload);
       });
@@ -143,7 +199,7 @@ class StorageService {
           end_time: newRecord.end_time,
           location: newRecord.location,
           description: newRecord.description,
-          color: newRecord.color || e.color || '#0284c7'
+          color: newRecord.color || e.color || '#2563eb'
         } : e);
       } else if (eventType === 'DELETE') {
         events = events.filter(e => e.id !== oldRecord.id);
@@ -209,8 +265,13 @@ class StorageService {
     let tasks = this.getTasks();
     tasks = tasks.filter(t => t.id !== id);
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
+    this.addPendingDeletion('task', id);
     this.notify();
-    SupabaseService.deleteTask(id);
+    SupabaseService.deleteTask(id).then(() => {
+      this.removePendingDeletion('task', id);
+    }).catch(err => {
+      console.warn('Eliminación remota pendiente offline (tarea):', err);
+    });
   }
 
   clearAllTasks() {
@@ -248,7 +309,7 @@ class StorageService {
     }
     const existingIndex = events.findIndex(e => e.id === event.id);
     if (existingIndex >= 0) {
-      events[existingIndex] = { ...events[existingIndex], ...event };
+      events[existingIndex] = { ...events[existingIndex], ...event, updated_at: new Date().toISOString() };
     } else {
       events.push(event);
     }
@@ -261,8 +322,13 @@ class StorageService {
     let events = this.getEvents();
     events = events.filter(e => e.id !== id);
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(events));
+    this.addPendingDeletion('event', id);
     this.notify();
-    SupabaseService.deleteEvent(id);
+    SupabaseService.deleteEvent(id).then(() => {
+      this.removePendingDeletion('event', id);
+    }).catch(err => {
+      console.warn('Eliminación remota pendiente offline (evento):', err);
+    });
   }
 
   clearAllEvents() {
@@ -332,18 +398,27 @@ class StorageService {
     let notes = this.getNotes();
     notes = notes.filter(n => n.id !== id);
     localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(notes));
+    this.addPendingDeletion('note', id);
     this.notify();
-    SupabaseService.deleteNote(id);
+    SupabaseService.deleteNote(id).then(() => {
+      this.removePendingDeletion('note', id);
+    }).catch(err => {
+      console.warn('Eliminación remota pendiente offline (nota):', err);
+    });
   }
 
   // ---- PROCESAMIENTO BATCH DESDE IA ----
   addBatchFromAI(aiResult, originalText = '') {
     const timestamp = Date.now();
+    const createdTasks = [];
+    const createdEvents = [];
+    const createdNotes = [];
 
     // 1. Tareas
     if (Array.isArray(aiResult.tasks)) {
+      const currentTasks = this.getTasks();
       aiResult.tasks.forEach((t, i) => {
-        this.saveTask({
+        const taskObj = {
           id: `task_${timestamp}_${i}`,
           title: t.title,
           priority: t.priority || 'media',
@@ -352,8 +427,14 @@ class StorageService {
           status: 'pending',
           completed: false,
           created_at: new Date().toISOString()
-        }, false);
+        };
+        createdTasks.push(taskObj);
+        currentTasks.unshift(taskObj);
       });
+      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(currentTasks));
+      if (createdTasks.length > 0) {
+        SupabaseService.syncTasksBulk(createdTasks);
+      }
     }
 
     // 2. Eventos de Calendario (colores distintos por día)
@@ -373,19 +454,30 @@ class StorageService {
           created_at: new Date().toISOString()
         };
         allEvents.push(eventObj);
-        this.saveEvent(eventObj, false);
+        createdEvents.push(eventObj);
       });
+      localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(allEvents));
+      if (createdEvents.length > 0) {
+        SupabaseService.syncEventsBulk(createdEvents);
+      }
     }
 
     // 3. Notas
     if (Array.isArray(aiResult.notes)) {
+      const currentNotes = this.getNotes();
       aiResult.notes.forEach((n, i) => {
-        this.saveNote({
+        const noteObj = {
           id: `note_${timestamp}_${i}`,
           content: typeof n === 'string' ? n : (n.content || JSON.stringify(n)),
           created_at: new Date().toISOString()
-        }, false);
+        };
+        createdNotes.push(noteObj);
+        currentNotes.unshift(noteObj);
       });
+      localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(currentNotes));
+      if (createdNotes.length > 0) {
+        SupabaseService.syncNotesBulk(createdNotes);
+      }
     }
 
     // Emitir una sola notificación para actualizar la interfaz de golpe
@@ -408,11 +500,13 @@ class StorageService {
       console.warn('Error guardando en historial:', e);
     }
   }
+
   clearLocalDataOnLogout() {
     localStorage.removeItem(STORAGE_KEYS.TASKS);
     localStorage.removeItem(STORAGE_KEYS.EVENTS);
     localStorage.removeItem(STORAGE_KEYS.NOTES);
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
+    localStorage.removeItem(STORAGE_KEYS.PENDING_DELETIONS);
     this.notify();
   }
 }

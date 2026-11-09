@@ -22,7 +22,7 @@ Este archivo (`GEMINI.md`) sirve como la memoria de contexto permanente del proy
 
 ## 2. Enlaces y Entornos de Producción
 
-- **Producción Vercel:** `https://mi-calendario-xi.vercel.app` (Proyecto: `mi-calendario` / `prj_GVVrwvoOXqn4Vod5qbCnaelQArN4`)
+- **Producción Vercel:** `https://mi-calendario-one.vercel.app` / `https://mi-calendario-xi.vercel.app` (Proyecto: `mi-calendario` / `prj_XoZOyPwUMITb31fThX3nVeGRRD0y`)
 - **Repositorio GitHub:** `https://github.com/LMZegarra/organiza-ai-pwa` (Rama principal: `main`)
 - **Supabase Cloud:** `https://vhxprfbexizxpllaqeqk.supabase.co` (Proyecto ref: `vhxprfbexizxpllaqeqk`)
 - **Credenciales Locales:** Guardadas de forma segura en `clavesQueUsaras.txt` y `.env` (ambos en `.gitignore`).

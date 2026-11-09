@@ -301,6 +301,83 @@ export const SupabaseService = {
     }
   },
 
+  async syncTasksBulk(tasks) {
+    if (!tasks || !tasks.length) return;
+    const client = this.getClient();
+    if (!client) return;
+    try {
+      const user = await this.getCurrentUser();
+      const payload = tasks.map(task => {
+        const item = {
+          id: task.id,
+          title: task.title,
+          priority: task.priority,
+          category: task.category,
+          due_date: task.due_date,
+          completed: task.completed,
+          status: task.status || (task.completed ? 'completed' : 'pending'),
+          updated_at: new Date().toISOString()
+        };
+        if (user) item.user_id = user.id;
+        return item;
+      });
+      const { error } = await client.from('organiza_tasks').upsert(payload);
+      if (error) console.warn('Fallo syncTasksBulk:', error.message);
+    } catch (e) {
+      console.warn('Error en syncTasksBulk:', e);
+    }
+  },
+
+  async syncEventsBulk(events) {
+    if (!events || !events.length) return;
+    const client = this.getClient();
+    if (!client) return;
+    try {
+      const user = await this.getCurrentUser();
+      const payload = events.map(event => {
+        const item = {
+          id: event.id,
+          title: event.title,
+          event_date: event.date,
+          start_time: event.start_time,
+          end_time: event.end_time,
+          location: event.location,
+          description: event.description,
+          updated_at: new Date().toISOString()
+        };
+        if (event.color) item.color = event.color;
+        if (user) item.user_id = user.id;
+        return item;
+      });
+      const { error } = await client.from('organiza_events').upsert(payload);
+      if (error) console.warn('Fallo syncEventsBulk:', error.message);
+    } catch (e) {
+      console.warn('Error en syncEventsBulk:', e);
+    }
+  },
+
+  async syncNotesBulk(notes) {
+    if (!notes || !notes.length) return;
+    const client = this.getClient();
+    if (!client) return;
+    try {
+      const user = await this.getCurrentUser();
+      const payload = notes.map(note => {
+        const item = {
+          id: note.id,
+          content: note.content || note.text,
+          created_at: note.created_at || new Date().toISOString()
+        };
+        if (user) item.user_id = user.id;
+        return item;
+      });
+      const { error } = await client.from('organiza_notes').upsert(payload);
+      if (error) console.warn('Fallo syncNotesBulk:', error.message);
+    } catch (e) {
+      console.warn('Error en syncNotesBulk:', e);
+    }
+  },
+
   setupRealtime(onRemoteChange) {
     const client = this.getClient();
     if (!client) return;

@@ -10,6 +10,15 @@ function getLocalDateISO(d = new Date()) {
   return `${y}-${m}-${day}`;
 }
 
+function getDayNameFromDate(dateISO) {
+  if (!dateISO || !/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
+    return new Date().toLocaleDateString('es-ES', { weekday: 'long' });
+  }
+  const [y, m, d] = dateISO.split('-').map(Number);
+  const dateObj = new Date(y, m - 1, d);
+  return dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+}
+
 function normalizeTimeString(timeStr) {
   if (!timeStr || typeof timeStr !== 'string') return null;
   const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
@@ -67,7 +76,7 @@ function cleanAndNormalizeAIResponse(content) {
 }
 
 function getSystemPrompt(currentDate = getLocalDateISO()) {
-  const dayName = new Date().toLocaleDateString('es-ES', { weekday: 'long' });
+  const dayName = getDayNameFromDate(currentDate);
   return `
 Eres un asistente experto en organización de proyectos, productividad y gestión de agendas.
 Fecha de referencia actual: ${currentDate} (${dayName}).
@@ -94,8 +103,7 @@ Responde ÚNICAMENTE con un JSON con la siguiente estructura exacta:
 }
 
 module.exports = async (req, res) => {
-  // Configurar CORS
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  // Configurar CORS estándar para API pública
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
@@ -112,8 +120,12 @@ module.exports = async (req, res) => {
   try {
     const { text, apiKey, model, currentDate } = req.body || {};
 
-    if (!text || text.trim().length === 0) {
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
       return res.status(400).json({ error: 'El texto no puede estar vacío.' });
+    }
+
+    if (text.length > 25000) {
+      return res.status(400).json({ error: 'El texto excede el límite máximo permitido (25,000 caracteres).' });
     }
 
     // Usa la clave enviada por el usuario o la variable de entorno de Vercel/servidor
@@ -129,8 +141,7 @@ module.exports = async (req, res) => {
       preferredModel,
       'openrouter/free',
       'google/gemini-2.0-flash-exp:free',
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'google/gemma-4-31b-it:free'
+      'meta-llama/llama-3.3-70b-instruct:free'
     ].filter(Boolean);
 
     const prompt = `${getSystemPrompt(currentDate)}\n\nTexto del usuario:\n"""\n${text}\n"""`;
@@ -138,6 +149,9 @@ module.exports = async (req, res) => {
 
     for (const m of [...new Set(modelsToTry)]) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 9000); // 9s timeout para no exceder Vercel
+
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -149,8 +163,10 @@ module.exports = async (req, res) => {
           body: JSON.stringify({
             model: m,
             messages: [{ role: 'user', content: prompt }]
-          })
+          }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         const resJson = await response.json();
         if (!response.ok) {

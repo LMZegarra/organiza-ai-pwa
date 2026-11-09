@@ -1,9 +1,10 @@
 /**
  * sw.js - Service Worker para OrganizaAI PWA
- * Estrategia: Cache-First para recursos estáticos y Network-First para APIs
+ * Estrategia: Network-First para navegación principal (actualizaciones inmediatas)
+ * y Cache-First para recursos estáticos (offline instantáneo).
  */
 
-const CACHE_NAME = 'organiza-ai-cache-v15';
+const CACHE_NAME = 'organiza-ai-cache-v3.2';
 const STATIC_ASSETS = [
   './',
   'index.html',
@@ -12,6 +13,7 @@ const STATIC_ASSETS = [
   'manifest.json',
   'icon.svg',
   'js/config.js',
+  'js/icons.js',
   'js/ai-service.js',
   'js/storage-service.js',
   'js/supabase-client.js',
@@ -21,7 +23,7 @@ const STATIC_ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Precargando caché estático de la aplicación');
+      console.log('[SW] Precargando caché estático de OrganizaAI v16');
       return cache.addAll(STATIC_ASSETS);
     })
   );
@@ -34,7 +36,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[SW] Eliminando caché antiguo:', key);
+            console.log('[SW] Purgando caché antiguo:', key);
             return caches.delete(key);
           }
         })
@@ -56,24 +58,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache First, falling back to network
+  // 1. Navegación (HTML principal): Network-first con fallback a caché (evita quedarse congelado en versión vieja)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match('./index.html') || caches.match('index.html');
+        })
+    );
+    return;
+  }
+
+  // 2. Recursos Estáticos: Cache-first con fallback a network
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
       return fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
         }
         return networkResponse;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html') || caches.match('index.html');
-        }
       });
     })
   );
