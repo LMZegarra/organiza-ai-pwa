@@ -34,7 +34,8 @@ const STORAGE_KEYS = {
   EVENTS: 'organiza_local_events',
   NOTES: 'organiza_local_notes',
   HISTORY: 'organiza_local_history',
-  PENDING_DELETIONS: 'organiza_pending_deletions'
+  PENDING_DELETIONS: 'organiza_pending_deletions',
+  CURRENT_USER_ID: 'organiza_current_user_id'
 };
 
 class StorageService {
@@ -111,45 +112,49 @@ class StorageService {
 
     try {
       const user = await SupabaseService.getCurrentUser();
-      if (!user) return; // Si no hay sesión activa, mantener en almacenamiento local seguro
+      if (!user) {
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_ID);
+        return; // Si no hay sesión activa, mantener en almacenamiento local seguro
+      }
+
+      const lastUserId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
+      const isNewUserSession = !lastUserId || lastUserId !== user.id;
+
+      if (isNewUserSession) {
+        // Si inició sesión un usuario nuevo o cambió de cuenta,
+        // limpiar datos residuales en el navegador para que no contaminen la nueva cuenta.
+        this.clearLocalDataOnLogout();
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, user.id);
+      }
 
       // 1. Purgar eliminaciones pendientes antes de traer datos remotos
       await this.flushPendingDeletions();
 
-      // 2. Subir elementos locales a la cuenta de usuario en Supabase
-      const localTasks = this.getTasks();
-      const localEvents = this.getEvents();
-      const localNotes = this.getNotes();
-
-      await Promise.all([
-        SupabaseService.syncTasksBulk(localTasks),
-        SupabaseService.syncEventsBulk(localEvents),
-        SupabaseService.syncNotesBulk(localNotes)
-      ]);
-
-      // 3. Traer datos remotos del usuario
+      // 2. Traer datos remotos del usuario desde Supabase (garantizado vacío para cuentas nuevas por RLS)
       const remote = await SupabaseService.fetchAllRemote();
       if (!remote) return;
 
       // Filtrar elementos remotos que sigan pendientes de eliminación local
       const pendingDeletions = new Set(this.getPendingDeletions().map(d => `${d.type}_${d.id}`));
 
-      if (Array.isArray(remote.tasks)) {
-        const cleanTasks = remote.tasks.filter(t => !pendingDeletions.has(`task_${t.id}`));
-        localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(cleanTasks));
-      }
-      if (Array.isArray(remote.calendar_events)) {
-        const cleanEvents = remote.calendar_events.filter(e => !pendingDeletions.has(`event_${e.id}`));
-        localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(cleanEvents));
-      }
-      if (Array.isArray(remote.notes)) {
-        const cleanNotes = remote.notes.filter(n => !pendingDeletions.has(`note_${n.id}`));
-        localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(cleanNotes));
-      }
+      const cleanTasks = Array.isArray(remote.tasks)
+        ? remote.tasks.filter(t => !pendingDeletions.has(`task_${t.id}`))
+        : [];
+      localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(cleanTasks));
+
+      const cleanEvents = Array.isArray(remote.calendar_events)
+        ? remote.calendar_events.filter(e => !pendingDeletions.has(`event_${e.id}`))
+        : [];
+      localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(cleanEvents));
+
+      const cleanNotes = Array.isArray(remote.notes)
+        ? remote.notes.filter(n => !pendingDeletions.has(`note_${n.id}`))
+        : [];
+      localStorage.setItem(STORAGE_KEYS.NOTES, JSON.stringify(cleanNotes));
 
       this.notify();
 
-      // 4. Suscribirse a cambios en tiempo real
+      // 3. Suscribirse a cambios en tiempo real
       SupabaseService.setupRealtime((type, payload) => {
         this.handleRealtimeEvent(type, payload);
       });
@@ -507,6 +512,7 @@ class StorageService {
     localStorage.removeItem(STORAGE_KEYS.NOTES);
     localStorage.removeItem(STORAGE_KEYS.HISTORY);
     localStorage.removeItem(STORAGE_KEYS.PENDING_DELETIONS);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_ID);
     this.notify();
   }
 }
