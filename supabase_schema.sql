@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS organiza_notes (
 
 -- Asegurar columna user_id en tablas preexistentes
 ALTER TABLE organiza_notes ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid();
+ALTER TABLE organiza_notes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 CREATE INDEX IF NOT EXISTS idx_organiza_notes_user_id ON organiza_notes(user_id);
 
 -- 4. Habilitar Seguridad a Nivel de Fila (RLS) Estricta por Usuario
