@@ -16,14 +16,16 @@ export function getLocalDateISO(d = new Date()) {
 
 export function normalizeTimeString(timeStr) {
   if (!timeStr || typeof timeStr !== 'string') return null;
-  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  const clean = timeStr.trim().toLowerCase();
+  const match = clean.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
   if (!match) return null;
-  const hour = match[1].padStart(2, '0');
-  const minute = match[2];
-  const hNum = parseInt(hour, 10);
-  const mNum = parseInt(minute, 10);
-  if (hNum >= 0 && hNum <= 23 && mNum >= 0 && mNum <= 59) {
-    return `${hour}:${minute}`;
+  let h = parseInt(match[1], 10);
+  const m = match[2] ? match[2] : '00';
+  const meridiem = match[3];
+  if (meridiem === 'pm' && h < 12) h += 12;
+  if (meridiem === 'am' && h === 12) h = 0;
+  if (h >= 0 && h <= 23) {
+    return `${String(h).padStart(2, '0')}:${m}`;
   }
   return null;
 }

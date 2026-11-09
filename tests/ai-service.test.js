@@ -9,14 +9,16 @@ function getLocalDateISO(d = new Date()) {
 
 function normalizeTimeString(timeStr) {
   if (!timeStr || typeof timeStr !== 'string') return null;
-  const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  const clean = timeStr.trim().toLowerCase();
+  const match = clean.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
   if (!match) return null;
-  const hour = match[1].padStart(2, '0');
-  const minute = match[2];
-  const hNum = parseInt(hour, 10);
-  const mNum = parseInt(minute, 10);
-  if (hNum >= 0 && hNum <= 23 && mNum >= 0 && mNum <= 59) {
-    return `${hour}:${minute}`;
+  let h = parseInt(match[1], 10);
+  const m = match[2] ? match[2] : '00';
+  const meridiem = match[3];
+  if (meridiem === 'pm' && h < 12) h += 12;
+  if (meridiem === 'am' && h === 12) h = 0;
+  if (h >= 0 && h <= 23) {
+    return `${String(h).padStart(2, '0')}:${m}`;
   }
   return null;
 }
@@ -92,10 +94,16 @@ const res3 = parseAIResponse(raw3);
 assert.strictEqual(res3.tasks[0].priority, 'media');
 
 // Test 4: Normalización de hora de 1 dígito (9:00 -> 09:00) y notas como objetos
-const raw4 = '{"calendar_events":[{"title":"Clase de yoga","date":"2026-11-12","start_time":"9:00","end_time":"10:30:00"}],"notes":[{"content":"Recordar toalla"}]}';
+const raw4 = '{"calendar_events":[{"title":"Clase de yoga","date":"2026-11-12","start_time":"9:00","end_time":"10:30"}],"notes":[{"content":"Recordar toalla"}]}';
 const res4 = parseAIResponse(raw4);
 assert.strictEqual(res4.calendar_events[0].start_time, '09:00');
 assert.strictEqual(res4.calendar_events[0].end_time, '10:30');
 assert.strictEqual(res4.notes[0], 'Recordar toalla');
+
+// Test 5: Formato 12 horas con AM/PM (3:00 PM -> 15:00)
+const raw5 = '{"calendar_events":[{"title":"Almuerzo","date":"2026-11-12","start_time":"1:30 PM","end_time":"2:45 pm"}]}';
+const res5 = parseAIResponse(raw5);
+assert.strictEqual(res5.calendar_events[0].start_time, '13:30');
+assert.strictEqual(res5.calendar_events[0].end_time, '14:45');
 
 console.log('✅ Todas las pruebas de parseo pasaron exitosamente.');

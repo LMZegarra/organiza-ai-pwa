@@ -1798,7 +1798,8 @@ function renderHomeActivities() {
       tasksToShow.forEach((task, idx) => {
         const accentClasses = ['accent-green', 'accent-blue', 'accent-orange', 'accent-purple'];
         const accentClass = accentClasses[idx % accentClasses.length];
-        const isOverdue = task.dueDate && task.dueDate < todayISO && !task.completed;
+        const taskDue = task.due_date || task.dueDate || null;
+        const isOverdue = taskDue && taskDue < todayISO && !task.completed;
 
         const card = document.createElement('div');
         card.className = `home-task-card ${accentClass} ${task.completed ? 'completed' : ''}`;
@@ -1806,7 +1807,7 @@ function renderHomeActivities() {
           <div class="home-task-main">
             <span class="home-task-title">${escapeHtml(task.title)}</span>
             <div class="home-task-meta-row">
-              <span class="home-task-time-pill">${task.dueDate || 'Sin fecha'}</span>
+              <span class="home-task-time-pill">${taskDue || 'Sin fecha'}</span>
               ${isOverdue ? '<span class="task-overdue-badge">¡Vencida!</span>' : ''}
               <span class="home-task-category-tag">${escapeHtml(task.category || 'General')}</span>
             </div>
@@ -1862,13 +1863,16 @@ function renderHomeActivities() {
       sortedEvents.slice(0, 4).forEach(ev => {
         const evCard = document.createElement('div');
         evCard.className = 'home-event-card';
+        const sTime = ev.start_time || ev.startTime || null;
+        const eTime = ev.end_time || ev.endTime || null;
+        const timeLabel = sTime ? (eTime ? `${sTime} - ${eTime}` : sTime) : 'Todo el día';
         evCard.innerHTML = `
           <div class="home-event-header">
             <div class="home-event-title-group">
               <span class="home-event-tag-badge" style="background:${ev.color || '#2563eb'}">📅</span>
               <h4>${escapeHtml(ev.title)}</h4>
             </div>
-            <span class="home-event-time-badge">${ev.startTime ? `${ev.startTime} ${ev.endTime ? '- ' + ev.endTime : ''}` : 'Todo el día'}</span>
+            <span class="home-event-time-badge">${timeLabel}</span>
           </div>
           ${ev.description ? `<p class="home-event-desc">${escapeHtml(ev.description)}</p>` : ''}
           ${ev.location ? `<a href="${ev.location.startsWith('http') ? ev.location : '#'}" target="_blank" rel="noopener" class="home-event-link-pill">🔗 ${escapeHtml(ev.location)}</a>` : ''}
@@ -1895,13 +1899,13 @@ function renderHomeActivities() {
   }
 }
 
-function openNewTaskModal(defaultDueDate = '') {
+function openNewTaskModal(defaultDueDate = '', defaultTitle = '', defaultCategory = 'General', defaultPriority = 'media') {
   taskModalId.value = '';
-  taskModalTitle.value = '';
-  taskModalCategory.value = 'General';
-  taskModalPriority.value = 'media';
+  taskModalTitle.value = defaultTitle || '';
+  taskModalCategory.value = defaultCategory || 'General';
+  taskModalPriority.value = defaultPriority || 'media';
   taskModalDueDate.value = defaultDueDate || '';
-  taskModalHeading.innerHTML = `${ICONS.pencil} Nueva Tarea`;
+  taskModalHeading.innerHTML = `${ICONS.pencil} ${defaultTitle ? 'Editar Tarea Propuesta' : 'Nueva Tarea'}`;
   openModalAccessible(dialogTaskModal);
 }
 window.openNewTaskModal = openNewTaskModal;
@@ -2184,14 +2188,19 @@ function setupChatAssistant() {
             openEventModal(null, date, {
               title: firstEvent.title,
               date: firstEvent.date,
-              startTime: firstEvent.startTime,
-              endTime: firstEvent.endTime,
+              startTime: firstEvent.start_time || firstEvent.startTime || '',
+              endTime: firstEvent.end_time || firstEvent.endTime || '',
               location: firstEvent.location,
               description: firstEvent.description,
-              color: '#2563eb'
+              color: firstEvent.color || '#2563eb'
             });
           } else if (firstTask) {
-            openNewTaskModal(firstTask.dueDate || date, firstTask.title);
+            openNewTaskModal(
+              firstTask.due_date || firstTask.dueDate || date,
+              firstTask.title,
+              firstTask.category || 'General',
+              firstTask.priority || 'media'
+            );
           }
         });
 
@@ -2460,12 +2469,20 @@ if (selectAppTheme) {
   selectAppTheme.value = initialTheme;
 }
 
-// Cierre accesible de modales al pulsar en el fondo exterior (Light Dismiss)
+// Cierre accesible de modales al pulsar en el fondo exterior (Light Dismiss robusto con verificación de bounding rect)
 const dialogQuickActionSheet = document.getElementById('dialogQuickActionSheet');
 [dialogSettings, dialogTaskModal, dialogEventModal, dialogNoteModal, dialogConfirmModal, dialogQuickActionSheet].forEach(dlg => {
   if (!dlg) return;
   dlg.addEventListener('click', (e) => {
-    if (e.target === dlg) {
+    if (e.target !== dlg) return;
+    const rect = dlg.getBoundingClientRect();
+    const isInsideContent = (
+      rect.top <= e.clientY &&
+      e.clientY <= rect.top + rect.height &&
+      rect.left <= e.clientX &&
+      e.clientX <= rect.left + rect.width
+    );
+    if (!isInsideContent) {
       dlg.close();
     }
   });
