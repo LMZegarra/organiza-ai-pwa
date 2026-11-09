@@ -2,25 +2,26 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f0f9ff">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
   <meta name="color-scheme" content="light dark">
   <title>OrganizaAI - Texto a Tareas y Calendario</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
   <!-- Tipografía moderna Google Fonts: Plus Jakarta Sans e Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <!-- Script anti-FOUC para persistencia de tema (Soft Blue por defecto / Oscuro Celeste) -->
+  <link rel="stylesheet" href="style.css?v=3.2">
+  <!-- Script anti-FOUC para persistencia de tema (Royal Blue por defecto / Deep Slate Oscuro) -->
   <script>
     (function() {
       try {
         var theme = localStorage.getItem('organiza_theme') || 'light';
         document.documentElement.setAttribute('data-theme', theme);
         var metaTheme = document.querySelector('meta[name="theme-color"]');
-        if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#08101c' : '#f0f9ff');
+        if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#080d1a' : '#f8fafc');
       } catch (e) {}
     })();
   </script>
@@ -29,21 +30,76 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- Header -->
+    <!-- Header Integrado de Productividad (Linear / Notion Style) -->
     <header class="header">
       <div class="logo-area">
-        <span class="logo-icon">✨</span>
-        <div>
+        <span class="logo-icon" aria-hidden="true">
+          <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+        </span>
+        <div class="brand-info">
           <h1>OrganizaAI</h1>
-          <p class="subtitle">Texto a Tareas y Calendario</p>
+          <p class="subtitle">Productividad con IA</p>
         </div>
       </div>
+
+      <!-- Navegación de Vistas Principales (Dock Flotante Glassmorphism en Mobile, Barra Superior en Desktop) -->
+      <nav class="view-tabs" role="tablist" aria-label="Navegación principal">
+        <button class="view-tab active" role="tab" id="tabViewHome" aria-selected="true" aria-controls="viewHome" data-target="viewHome">
+          <span class="tab-icon" aria-hidden="true">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
+          <span class="tab-label">Inicio</span>
+        </button>
+        <button class="view-tab" role="tab" id="tabViewCalendar" aria-selected="false" aria-controls="viewCalendar" data-target="viewCalendar">
+          <span class="tab-icon" aria-hidden="true">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+          </span>
+          <span class="tab-label">Calendario</span>
+        </button>
+
+        <!-- Botón Central Flotante Elevado (+) De Mockup WhatsApp y e rv -->
+        <button class="dock-floating-add-btn" id="btnDockAdd" type="button" title="Acción rápida o capturar con IA" aria-label="Crear o planificar">
+          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </button>
+
+        <button class="view-tab" role="tab" id="tabViewTasks" aria-selected="false" aria-controls="viewTasks" data-target="viewTasks">
+          <span class="tab-icon" aria-hidden="true">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </span>
+          <span class="tab-label">Tareas</span>
+          <span id="badgeTaskCount" class="tab-counter-badge">0</span>
+        </button>
+        <button class="view-tab" role="tab" id="tabViewAssistant" aria-selected="false" aria-controls="viewAssistant" data-target="viewAssistant">
+          <span class="tab-icon" aria-hidden="true">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+          </span>
+          <span class="tab-label">Asistente</span>
+        </button>
+
+        <!-- Pestañas Adicionales Accesibles en Desktop -->
+        <button class="view-tab view-tab-desktop-only" role="tab" id="tabViewNotes" aria-selected="false" aria-controls="viewNotes" data-target="viewNotes">
+          <span class="tab-icon" aria-hidden="true">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+          </span>
+          <span class="tab-label">Ideas</span>
+          <span id="badgeNoteCount" class="tab-counter-badge">0</span>
+        </button>
+        <button class="view-tab view-tab-desktop-only" role="tab" id="tabViewHistory" aria-selected="false" aria-controls="viewHistory" data-target="viewHistory">
+          <span class="tab-icon" aria-hidden="true">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          </span>
+          <span class="tab-label">Historial</span>
+        </button>
+      </nav>
+
       <div class="header-right">
-        <div id="syncBadge" class="sync-badge local" title="Estado de sincronización">
-          <span class="sync-dot"></span> <span id="syncText">LOCAL</span>
-        </div>
-        <button id="btnSettings" class="header-settings-btn" title="Ajustes y Cuenta" aria-label="Abrir ajustes y cuenta">
-          ⚙️ <span id="settingsBtnLabel">Ajustes</span>
+        <button id="btnThemeToggle" class="header-icon-btn" title="Alternar tema claro / oscuro" aria-label="Cambiar tema visual">
+          <svg class="ui-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <svg class="ui-icon theme-icon-moon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+        <button id="btnSettings" class="header-settings-btn header-settings-btn-desktop" title="Mi Cuenta y Ajustes" aria-label="Abrir cuenta y ajustes">
+          <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="settingsBtnLabel">Cuenta</span>
         </button>
       </div>
     </header>
@@ -52,67 +108,40 @@
     <dialog id="dialogSettings" class="modal-dialog">
       <div class="dialog-inner">
         <div class="dialog-header">
-          <h3 id="settingsModalHeading">⚙️ Ajustes y Cuenta</h3>
+          <h3 id="settingsModalHeading">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            Ajustes y Cuenta
+          </h3>
           <button id="btnCloseModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
 
-        <!-- Pestañas internas de navegación: Ajustes / Cuenta -->
+        <!-- Pestañas internas de navegación: Mi Cuenta (Predeterminada) / Preferencias de IA -->
         <div class="settings-tabs" role="tablist" aria-label="Secciones de ajustes">
-          <button type="button" id="tabSettingsGeneral" class="settings-tab-btn active" role="tab" aria-selected="true" aria-controls="settingsGeneralPane">
-            ⚙️ Ajustes
+          <button type="button" id="tabSettingsAccount" class="settings-tab-btn active" role="tab" aria-selected="true" aria-controls="settingsAccountPane">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Mi Cuenta <span id="accountTabBadge" class="account-tab-badge">● Local</span>
           </button>
-          <button type="button" id="tabSettingsAccount" class="settings-tab-btn" role="tab" aria-selected="false" aria-controls="settingsAccountPane">
-            👤 Cuenta <span id="accountTabBadge" class="account-tab-badge">● Local</span>
+          <button type="button" id="tabSettingsGeneral" class="settings-tab-btn" role="tab" aria-selected="false" aria-controls="settingsGeneralPane">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+            Preferencias de IA
           </button>
         </div>
 
-        <!-- Panel 1: Ajustes Generales (Tema y API Key) -->
-        <div id="settingsGeneralPane" class="settings-tab-pane" role="tabpanel" aria-labelledby="tabSettingsGeneral">
-          <div class="settings-theme-group">
-            <label class="modal-label" for="selectAppTheme">🎨 Tema Visual:</label>
-            <select id="selectAppTheme" class="styled-input">
-              <option value="light">🌤️ Soft Blue (Claro y Relajante - Por defecto)</option>
-              <option value="dark">🌙 Oscuro Celeste (Fondo Noche con toques Celestes)</option>
-            </select>
-            <small class="help-text">Elige tu experiencia visual preferida.</small>
-          </div>
-
-          <hr class="settings-divider" />
-
-          <div class="sync-badge local" id="keyStatusBanner" style="align-self:flex-start;">
-            <span class="sync-dot"></span> <span id="keyStatusText">Usando OpenRouter por defecto</span>
-          </div>
-
-          <label class="modal-label" for="inputCustomOpenRouterKey">API Key Propia de OpenRouter (Opcional):</label>
-          <input
-            type="password"
-            id="inputCustomOpenRouterKey"
-            class="styled-input"
-            placeholder="sk-or-v1-... (dejar vacío para usar la predeterminada)"
-          />
-          <small class="help-text">
-            Si cuentas con una suscripción o saldo propio en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a>, ingresa tu clave personal aquí. Si lo dejas en blanco, la app funcionará con la configuración por defecto.
-          </small>
-
-          <div class="dialog-actions" style="margin-top:14px;">
-            <button id="btnSaveSettings" class="btn btn-primary" type="button">Guardar Ajustes</button>
-            <button id="btnDismissModal" class="btn btn-secondary" type="button">Cerrar</button>
-          </div>
-        </div>
-
-        <!-- Panel 2: Cuenta (Autenticación Supabase Auth) -->
-        <div id="settingsAccountPane" class="settings-tab-pane hidden" role="tabpanel" aria-labelledby="tabSettingsAccount">
+        <!-- Panel 1 (Predeterminado): Mi Cuenta y Sincronización en la Nube -->
+        <div id="settingsAccountPane" class="settings-tab-pane" role="tabpanel" aria-labelledby="tabSettingsAccount">
           <!-- Estado de usuario logueado -->
           <div id="authProfileSection" class="auth-profile-section hidden">
             <div class="user-profile-card">
-              <span class="user-avatar">👤</span>
+              <span class="user-avatar" aria-hidden="true">
+                <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
               <div>
                 <p class="user-email-label">Sesión activa como:</p>
                 <strong id="userEmailDisplay" class="user-email-text"></strong>
               </div>
             </div>
             <div class="profile-info-banner">
-              ✨ Tus tareas, eventos y notas están sincronizados en tiempo real con tu cuenta segura en Supabase.
+              Tus tareas, eventos y notas están respaldados y sincronizados en tiempo real con Supabase Cloud.
             </div>
             <div class="dialog-actions" style="margin-top:16px;">
               <button id="btnLogout" class="btn btn-danger" type="button">Cerrar Sesión</button>
@@ -120,14 +149,22 @@
             </div>
           </div>
 
-          <!-- Formulario de Login / Registro -->
+          <!-- Formulario de Login / Registro para Invitados -->
           <div id="authFormSection" class="auth-form-section">
-            <div class="auth-tabs">
-              <button id="tabAuthLogin" class="auth-tab-btn active" type="button">Iniciar Sesión</button>
-              <button id="tabAuthSignup" class="auth-tab-btn" type="button">Registrarse</button>
+            <div class="guest-account-intro">
+              <div class="guest-intro-badge">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Modo Local / Dispositivo Seguro</span>
+              </div>
+              <p class="guest-intro-desc">Tus datos se guardan al instante en este navegador. Inicia sesión o crea tu cuenta gratuita para activar el respaldo en la nube y sincronizar con tu móvil y computadora.</p>
             </div>
 
-            <div id="authAlertBox" class="auth-alert hidden"></div>
+            <div class="auth-tabs" role="tablist" aria-label="Acciones de sesión">
+              <button id="tabAuthLogin" class="auth-tab-btn active" type="button" role="tab" aria-selected="true">Iniciar Sesión</button>
+              <button id="tabAuthSignup" class="auth-tab-btn" type="button" role="tab" aria-selected="false">Crear Cuenta</button>
+            </div>
+
+            <div id="authAlertBox" class="auth-alert hidden" role="alert"></div>
 
             <form id="formAuth" class="modal-form">
               <label class="modal-label" for="inputAuthEmail">Correo electrónico:</label>
@@ -138,6 +175,7 @@
                 placeholder="tu@correo.com"
                 required
                 autocomplete="email"
+                spellcheck="false"
               />
 
               <label class="modal-label" for="inputAuthPassword">Contraseña:</label>
@@ -160,53 +198,117 @@
               </div>
 
               <button id="btnMagicLink" class="btn btn-outline btn-sm" type="button">
-                ✉️ Enviar enlace mágico al correo
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                Enviar enlace mágico al correo
               </button>
             </form>
+          </div>
+        </div>
+
+        <!-- Panel 2 (Secundario): Preferencias y Motor de IA -->
+        <div id="settingsGeneralPane" class="settings-tab-pane hidden" role="tabpanel" aria-labelledby="tabSettingsGeneral">
+          <div class="ai-status-card">
+            <div class="ai-status-header">
+              <div class="ai-status-icon-wrap" aria-hidden="true">
+                <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+              </div>
+              <div>
+                <strong>Motor Inteligente OrganizaAI</strong>
+                <p class="ai-status-sub">El procesamiento automático con IA está activo de forma transparente mediante la nube de la aplicación.</p>
+              </div>
+            </div>
+            <div class="sync-badge synced" id="keyStatusBanner" style="align-self:flex-start; margin-top:8px;">
+              <span class="sync-dot" aria-hidden="true"></span> <span id="keyStatusText">Servicio Activo y Listo</span>
+            </div>
+          </div>
+
+          <details class="advanced-ai-details" style="margin-top:14px;">
+            <summary class="advanced-ai-summary">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+              Opciones Avanzadas para Desarrolladores (Opcional)
+            </summary>
+            <div class="advanced-ai-body" style="padding-top:10px;">
+              <label class="modal-label" for="inputCustomOpenRouterKey">API Key Personal de OpenRouter:</label>
+              <input
+                type="password"
+                id="inputCustomOpenRouterKey"
+                class="styled-input"
+                placeholder="sk-or-v1-… (dejar vacío para usar la configuración por defecto)"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <small class="help-text">
+                Solo si deseas consumir tu propia cuota o saldo de <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a>. Si no ingresas nada, el servicio funciona de forma predeterminada.
+              </small>
+              <div class="dialog-actions" style="margin-top:12px;">
+                <button id="btnSaveSettings" class="btn btn-primary btn-sm" type="button">Guardar Clave</button>
+              </div>
+            </div>
+          </details>
+
+          <div class="dialog-actions" style="margin-top:16px;">
+            <button id="btnDismissModal" class="btn btn-secondary" type="button">Cerrar</button>
           </div>
         </div>
       </div>
     </dialog>
 
-    <!-- Modal para Crear / Editar Tareas -->
+    <!-- Modal para Crear / Editar Tareas (Creación Rápida & Progresiva) -->
     <dialog id="dialogTaskModal" class="modal-dialog">
       <div class="dialog-inner">
         <div class="dialog-header">
-          <h3 id="taskModalHeading">✏️ Tarea</h3>
+          <h3 id="taskModalHeading">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Nueva Tarea
+          </h3>
           <button id="btnCloseTaskModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
         <form id="formTaskModal" class="modal-form">
           <input type="hidden" id="taskModalId" />
 
-          <label class="modal-label" for="taskModalTitle">Título de la tarea:</label>
-          <input type="text" id="taskModalTitle" class="styled-input" placeholder="Ej. Comprar insumos de oficina" required />
+          <!-- Paso 1: Campo esencial -->
+          <div class="modal-essential-fields">
+            <label class="modal-label" for="taskModalTitle">¿Qué necesitas hacer?</label>
+            <input type="text" id="taskModalTitle" class="styled-input form-input-hero" placeholder="Ej. Comprar insumos de oficina, Revisar métricas…" required autocomplete="off" />
 
-          <div class="form-row-2">
-            <div>
-              <label class="modal-label" for="taskModalCategory">Categoría:</label>
-              <select id="taskModalCategory" class="styled-input">
-                <option value="Trabajo">💼 Trabajo</option>
-                <option value="Personal">🏠 Personal</option>
-                <option value="Compras">🛒 Compras</option>
-                <option value="Estudio">📚 Estudio</option>
-                <option value="Salud">💊 Salud</option>
-                <option value="General" selected>📌 General</option>
-              </select>
-            </div>
-            <div>
-              <label class="modal-label" for="taskModalPriority">Prioridad:</label>
-              <select id="taskModalPriority" class="styled-input">
-                <option value="alta">🔴 Alta</option>
-                <option value="media" selected>🟠 Media</option>
-                <option value="baja">🔵 Baja</option>
-              </select>
+            <div class="form-row-2">
+              <div>
+                <label class="modal-label" for="taskModalDueDate">Fecha Límite (Opcional):</label>
+                <input type="date" id="taskModalDueDate" class="styled-input" />
+              </div>
+              <div>
+                <label class="modal-label" for="taskModalCategory">Categoría:</label>
+                <select id="taskModalCategory" class="styled-input">
+                  <option value="General" selected>General</option>
+                  <option value="Trabajo">Trabajo</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Compras">Compras</option>
+                  <option value="Estudio">Estudio</option>
+                  <option value="Salud">Salud</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <label class="modal-label" for="taskModalDueDate">Fecha Límite (Opcional):</label>
-          <input type="date" id="taskModalDueDate" class="styled-input" />
+          <!-- Paso 2: Opciones avanzadas progresivas -->
+          <details class="modal-collapsible-options">
+            <summary class="modal-collapsible-trigger">
+              <span class="trigger-label">
+                <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                <span>Prioridad (Alta / Media / Baja)</span>
+              </span>
+            </summary>
+            <div class="modal-advanced-content">
+              <label class="modal-label" for="taskModalPriority">Nivel de Prioridad:</label>
+              <select id="taskModalPriority" class="styled-input">
+                <option value="baja">Baja</option>
+                <option value="media" selected>Media</option>
+                <option value="alta">Alta</option>
+              </select>
+            </div>
+          </details>
 
-          <div class="dialog-actions" style="margin-top:16px;">
+          <div class="dialog-actions modal-sticky-actions">
             <button id="btnSaveTaskModal" class="btn btn-primary" type="submit">Guardar Tarea</button>
             <button id="btnDismissTaskModal" class="btn btn-secondary" type="button">Cancelar</button>
           </div>
@@ -214,20 +316,23 @@
       </div>
     </dialog>
 
-    <!-- Modal para Crear / Editar Notas e Ideas -->
+    <!-- Modal para Crear / Editar Notas e Ideas (Captura Rápida) -->
     <dialog id="dialogNoteModal" class="modal-dialog">
       <div class="dialog-inner">
         <div class="dialog-header">
-          <h3 id="noteModalHeading">💡 Nota o Idea</h3>
+          <h3 id="noteModalHeading">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+            Nota o Idea Rápida
+          </h3>
           <button id="btnCloseNoteModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
         <form id="formNoteModal" class="modal-form">
           <input type="hidden" id="noteModalId" />
 
-          <label class="modal-label" for="noteModalContent">Contenido de la nota:</label>
-          <textarea id="noteModalContent" class="styled-textarea" rows="4" placeholder="Escribe tu pensamiento, idea o apunte..." required></textarea>
+          <label class="modal-label" for="noteModalContent">Captura tu pensamiento o apunte:</label>
+          <textarea id="noteModalContent" class="styled-textarea form-textarea-hero" rows="4" placeholder="Escribe tu pensamiento, idea o apunte de referencia rápida…" required></textarea>
 
-          <div class="dialog-actions" style="margin-top:16px;">
+          <div class="dialog-actions modal-sticky-actions">
             <button id="btnSaveNoteModal" class="btn btn-primary" type="submit">Guardar Nota</button>
             <button id="btnDismissNoteModal" class="btn btn-secondary" type="button">Cancelar</button>
           </div>
@@ -235,52 +340,77 @@
       </div>
     </dialog>
 
-    <!-- Modal para Crear / Editar Eventos y Citas del Calendario -->
+    <!-- Modal para Crear / Editar Eventos y Citas del Calendario (Creación Rápida & Progresiva) -->
     <dialog id="dialogEventModal" class="modal-dialog">
       <div class="dialog-inner">
         <div class="dialog-header">
-          <h3 id="eventModalHeading">📅 Evento o Cita</h3>
+          <h3 id="eventModalHeading">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+            Nuevo Evento
+          </h3>
           <button id="btnCloseEventModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
         <form id="formEventModal" class="modal-form">
           <input type="hidden" id="eventModalId" />
 
-          <label class="modal-label" for="eventModalTitle">Título o motivo del evento:</label>
-          <input type="text" id="eventModalTitle" class="styled-input" placeholder="Ej. Cita con el dentista, Reunión Zoom..." required />
+          <!-- Paso 1: Creación Rápida (Campos Esenciales) -->
+          <div class="modal-essential-fields">
+            <label class="modal-label" for="eventModalTitle">¿Qué tienes planeado?</label>
+            <input type="text" id="eventModalTitle" class="styled-input form-input-hero" placeholder="Ej. Reunión de proyecto, Cita con el dentista…" required autocomplete="off" />
 
-          <div class="form-row-2">
-            <div>
-              <label class="modal-label" for="eventModalDate">Fecha:</label>
-              <input type="date" id="eventModalDate" class="styled-input" required />
+            <div class="form-row-2">
+              <div>
+                <label class="modal-label" for="eventModalDate">Fecha:</label>
+                <input type="date" id="eventModalDate" class="styled-input" required />
+              </div>
+              <div>
+                <label class="modal-label" for="eventModalStartTime">Hora de inicio:</label>
+                <input type="time" id="eventModalStartTime" class="styled-input" />
+              </div>
             </div>
-            <div>
-              <label class="modal-label" for="eventModalStartTime">Hora de inicio:</label>
-              <input type="time" id="eventModalStartTime" class="styled-input" />
+
+            <div class="form-row-checkbox">
+              <label class="checkbox-label" for="eventModalAllDay">
+                <input type="checkbox" id="eventModalAllDay" class="styled-checkbox" />
+                <span>Todo el día</span>
+              </label>
             </div>
           </div>
 
-          <div class="form-row-2">
-            <div>
-              <label class="modal-label" for="eventModalEndTime">Hora de fin (Opcional):</label>
-              <input type="time" id="eventModalEndTime" class="styled-input" />
+          <!-- Paso 2: Opciones Avanzadas Progresivas (Collapsible) -->
+          <details id="eventDetailsAdvanced" class="modal-collapsible-options">
+            <summary class="modal-collapsible-trigger" id="btnToggleEventOptions">
+              <span class="trigger-label">
+                <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                <span>Más opciones (Fin, lugar, color, notas)</span>
+              </span>
+            </summary>
+            <div class="modal-advanced-content">
+              <div class="form-row-2">
+                <div>
+                  <label class="modal-label" for="eventModalEndTime">Hora de finalización:</label>
+                  <input type="time" id="eventModalEndTime" class="styled-input" />
+                </div>
+                <div>
+                  <label class="modal-label" for="eventModalLocation">Lugar o enlace virtual:</label>
+                  <input type="text" id="eventModalLocation" class="styled-input" placeholder="Ej. Google Meet, Consultorio 302…" autocomplete="off" />
+                </div>
+              </div>
+
+              <!-- Paleta de 10 colores compacta -->
+              <div class="color-picker-group">
+                <label class="modal-label" id="labelEventColor">Color identificador:</label>
+                <div class="event-color-palette compact-palette" id="eventColorPalette" role="radiogroup" aria-labelledby="labelEventColor"></div>
+                <input type="hidden" id="eventModalColor" value="#2563eb" />
+              </div>
+
+              <label class="modal-label" for="eventModalDescription">Notas o preparativos adicionales:</label>
+              <textarea id="eventModalDescription" class="styled-textarea" rows="2" placeholder="Detalles, enlaces o preparativos…" autocomplete="off"></textarea>
             </div>
-            <div>
-              <label class="modal-label" for="eventModalLocation">Lugar o Enlace (Opcional):</label>
-              <input type="text" id="eventModalLocation" class="styled-input" placeholder="Ej. Consultorio 302, Meet..." />
-            </div>
-          </div>
+          </details>
 
-          <!-- Paleta de 10 colores para el evento -->
-          <div class="color-picker-group">
-            <label class="modal-label" id="labelEventColor">Color del evento (10 tonos básicos):</label>
-            <div class="event-color-palette" id="eventColorPalette" role="radiogroup" aria-labelledby="labelEventColor"></div>
-            <input type="hidden" id="eventModalColor" value="#0284c7" />
-          </div>
-
-          <label class="modal-label" for="eventModalDescription">Notas adicionales (Opcional):</label>
-          <input type="text" id="eventModalDescription" class="styled-input" placeholder="Detalles, recordatorios o preparativos..." />
-
-          <div class="dialog-actions" style="margin-top:16px;">
+          <!-- Acciones de Guardado Accesibles y Fijas -->
+          <div class="dialog-actions modal-sticky-actions">
             <button id="btnSaveEventModal" class="btn btn-primary" type="submit">Guardar Evento</button>
             <button id="btnDismissEventModal" class="btn btn-secondary" type="button">Cancelar</button>
           </div>
@@ -292,7 +422,10 @@
     <dialog id="dialogConfirmModal" class="modal-dialog confirm-dialog">
       <div class="dialog-inner">
         <div class="dialog-header">
-          <h3 id="confirmModalHeading">⚠️ Confirmación</h3>
+          <h3 id="confirmModalHeading">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            Confirmación
+          </h3>
           <button id="btnCloseConfirmModal" class="btn-close" aria-label="Cerrar modal">&times;</button>
         </div>
         <p id="confirmModalMessage" class="confirm-modal-message">¿Estás seguro de realizar esta acción?</p>
@@ -303,108 +436,302 @@
       </div>
     </dialog>
 
-    <!-- Área de Entrada de Texto Inteligente -->
-    <section class="input-card" id="inputCardSection">
-      <form id="organizeForm" class="organize-form">
-        <div class="input-header-row">
-          <label for="inputText" class="input-label">✨ ¿Qué deseas planificar u organizar hoy?</label>
-          <button type="button" id="btnToggleExamples" class="btn-examples-toggle" aria-expanded="false" title="Mostrar sugerencias">💡 Ver ejemplos</button>
+    <!-- Modal Rápido de Acción (+) para el Dock Flotante (Bottom Sheet en Móvil / Diálogo en Desktop) -->
+    <dialog id="dialogQuickActionSheet" class="modal-dialog quick-action-sheet">
+      <div class="dialog-inner sheet-drawer">
+        <div class="sheet-drag-handle" aria-hidden="true"></div>
+        <div class="dialog-header">
+          <h3 id="quickActionSheetHeading">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Crear o Planificar
+          </h3>
+          <button id="btnCloseQuickActionSheet" class="btn-close" aria-label="Cerrar panel">&times;</button>
         </div>
-        <textarea
-          id="inputText"
-          class="smart-textarea"
-          rows="2"
-          placeholder="Escribe lo que tengas en mente... (ej: Mañana a las 4pm dentista y comprar café el viernes)"
-          required
-        ></textarea>
-        
-        <div class="input-action-row">
-          <div class="input-tips">
-            <span class="tip-shortcut">Atajo: <strong>Ctrl + Enter</strong></span>
-          </div>
-          <button type="submit" id="btnSubmitText" class="btn btn-primary btn-submit">
-            ✨ Organizar con IA
+        <div class="quick-action-options">
+          <button type="button" id="btnActionOpenAssistant" class="quick-action-item">
+            <span class="action-item-icon ai-sparkle">✦</span>
+            <div class="action-item-text">
+              <strong>Organizar con Asistente IA</strong>
+              <small>Escribe o conversa para estructurar tareas y eventos</small>
+            </div>
+            <svg class="action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button type="button" id="btnActionNewEvent" class="quick-action-item">
+            <span class="action-item-icon calendar-blue">📅</span>
+            <div class="action-item-text">
+              <strong>Nuevo Evento o Cita</strong>
+              <small>Creación rápida con fecha y hora</small>
+            </div>
+            <svg class="action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button type="button" id="btnActionNewTask" class="quick-action-item">
+            <span class="action-item-icon task-green">✓</span>
+            <div class="action-item-text">
+              <strong>Nueva Tarea</strong>
+              <small>Acción concreta con prioridad y fecha límite</small>
+            </div>
+            <svg class="action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button type="button" id="btnActionNewNote" class="quick-action-item">
+            <span class="action-item-icon note-amber">💡</span>
+            <div class="action-item-text">
+              <strong>Nueva Idea o Nota</strong>
+              <small>Pensamiento o apunte de referencia sintetizado</small>
+            </div>
+            <svg class="action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <button type="button" id="btnActionVoiceDictate" class="quick-action-item">
+            <span class="action-item-icon voice-purple">🎙️</span>
+            <div class="action-item-text">
+              <strong>Dictado por Voz</strong>
+              <small>Habla con naturalidad y deja que la IA organice</small>
+            </div>
+            <svg class="action-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
-      </form>
-
-      <!-- Chips de ejemplos rápidos -->
-      <div class="example-chips" id="exampleChipsContainer">
-        <span class="chips-label">Sugerencias:</span>
-        <button class="chip-btn" type="button" data-text="Mañana a las 15:30 reunión de equipo por Zoom y pagar la tarjeta de crédito el viernes">📅 Reunión y pago</button>
-        <button class="chip-btn" type="button" data-text="Comprar leche, huevos y fruta el sábado por la mañana. Prioridad alta">🛒 Compras del sábado</button>
-        <button class="chip-btn" type="button" data-text="Entregar borrador del proyecto el 15 de noviembre y revisar correos pendientes">💼 Proyecto y correos</button>
       </div>
-    </section>
+    </dialog>
 
-    <!-- Indicador de Carga -->
-    <div id="loadingIndicator" class="loading-container hidden">
-      <div class="spinner"></div>
-      <p id="loadingText">Interpretando y clasificando en tareas y calendario con IA...</p>
+    <!-- Cápsula Flotante de Dictado por Voz (De Mockup e rgr er .jpeg) -->
+    <div id="voiceDictationCapsule" class="voice-capsule-overlay hidden" role="dialog" aria-modal="true" aria-label="Dictado por voz">
+      <div class="voice-capsule">
+        <div class="voice-capsule-top">
+          <div class="voice-recording-indicator">
+            <span class="voice-recording-dot" aria-hidden="true"></span>
+            <span id="voiceRecordingTimer" class="voice-timer">0:12</span>
+          </div>
+          <div class="voice-waveform" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <button type="button" id="btnVoiceCancel" class="voice-cancel-btn" title="Cancelar dictado" aria-label="Cancelar dictado">
+            ✕
+          </button>
+        </div>
+        <div class="voice-transcript-area">
+          <p id="voiceTranscriptText" class="voice-transcript">Programar sesión de gimnasio hoy a las 21:00...</p>
+        </div>
+        <div class="voice-capsule-bottom">
+          <span class="voice-hint">Habla con naturalidad o presiona enviar</span>
+          <button type="button" id="btnVoiceSubmit" class="voice-submit-btn" title="Procesar audio con IA" aria-label="Procesar audio">
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
     </div>
-
-    <!-- Navegación de Vistas Principales -->
-    <nav class="view-tabs" aria-label="Navegación principal">
-      <button class="view-tab active" data-target="viewCalendar">
-        <span class="tab-icon">📅</span>
-        <span class="tab-label">Calendario</span>
-      </button>
-      <button class="view-tab" data-target="viewTasks">
-        <span class="tab-icon">✅</span>
-        <span class="tab-label">Tareas (<span id="badgeTaskCount">0</span>)</span>
-      </button>
-      <button class="view-tab" data-target="viewNotes">
-        <span class="tab-icon">💡</span>
-        <span class="tab-label">Ideas (<span id="badgeNoteCount">0</span>)</span>
-      </button>
-      <button class="view-tab" data-target="viewHistory">
-        <span class="tab-icon">📂</span>
-        <span class="tab-label">Historial</span>
-      </button>
-    </nav>
 
     <!-- VISTAS -->
     <main class="main-content">
+      <!-- VISTA 0: Inicio Personal (De Mockups WhatsApp 6.56.10 PM y e rv .jpeg) -->
+      <section id="viewHome" class="view-panel active" role="tabpanel" aria-labelledby="tabViewHome">
+        <!-- Cabecera de Inicio: Fecha y Saludo Personalizado -->
+        <div class="home-hero-header">
+          <div class="home-date-meta">
+            <span id="homeDateSubtitle" class="home-date-subtitle">Lunes, 17 de Abril</span>
+            <h2 id="homeGreetingTitle" class="home-greeting-title">Buenos días, Jonas <span class="greeting-wave">👋</span></h2>
+          </div>
+          <div class="home-hero-actions">
+            <button id="btnHomeSearch" class="home-circle-btn" title="Buscar tareas o eventos" aria-label="Buscar">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </button>
+            <button id="btnHomeProfile" class="home-avatar-btn" title="Mi Cuenta" aria-label="Abrir mi cuenta">
+              <span class="home-avatar-img" aria-hidden="true">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <span class="home-avatar-badge-dot" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Carrusel Cover Flow Animado de Fechas (Continuo y Táctil) -->
+        <div class="date-carousel-container" id="homeDateCarousel" aria-label="Carrusel interactivo de fechas">
+          <div class="date-carousel-viewport" id="dateCarouselViewport" tabindex="0" role="region" aria-label="Desplaza horizontalmente para cambiar de día">
+            <div class="date-carousel-track" id="dateCarouselTrack" role="tablist">
+              <!-- Días continuos generados dinámicamente con Cover Flow -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtro Rápido de Categorías: Todas las tareas, Personal, Trabajo -->
+        <div class="home-filter-pills" role="radiogroup" aria-label="Filtro de tareas">
+          <button type="button" class="home-pill active" data-filter="all">Todas las tareas</button>
+          <button type="button" class="home-pill" data-filter="Personal">Personal</button>
+          <button type="button" class="home-pill" data-filter="Trabajo">Trabajo</button>
+        </div>
+
+        <!-- Widget de Resumen Productivo con Gráfico Donut (De Mockup WhatsApp 6.56.10 PM) -->
+        <div class="home-stats-card">
+          <div class="stats-card-header">
+            <h3 id="homeStatsCountHeading" class="stats-count-heading">6 tareas para hoy</h3>
+            <span class="stats-efficiency-badge">✦ Productividad al día</span>
+          </div>
+          <div class="stats-donut-layout">
+            <!-- SVG Donut Chart Proporcional -->
+            <div class="donut-chart-wrapper" aria-hidden="true">
+              <svg class="donut-svg" viewBox="0 0 100 100">
+                <circle class="donut-track" cx="50" cy="50" r="40" stroke-width="12" fill="none"/>
+                <circle id="donutSegmentCompleted" class="donut-segment completed" cx="50" cy="50" r="40" stroke-width="12" fill="none" stroke-dasharray="125.6 251.2" stroke-dashoffset="0"/>
+                <circle id="donutSegmentProgress" class="donut-segment progress" cx="50" cy="50" r="40" stroke-width="12" fill="none" stroke-dasharray="41.8 251.2" stroke-dashoffset="-125.6"/>
+                <circle id="donutSegmentPending" class="donut-segment pending" cx="50" cy="50" r="40" stroke-width="12" fill="none" stroke-dasharray="83.8 251.2" stroke-dashoffset="-167.4"/>
+              </svg>
+              <div class="donut-center-label">
+                <span id="donutPercentText" class="donut-percent">75%</span>
+                <span class="donut-sublabel">Completado</span>
+              </div>
+            </div>
+            <!-- Leyenda de colores -->
+            <div class="donut-legend">
+              <div class="legend-row">
+                <span class="legend-dot completed"></span>
+                <span id="legendCompletedText" class="legend-text"><strong>3 tareas</strong> completadas</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot progress"></span>
+                <span id="legendProgressText" class="legend-text"><strong>1 tarea</strong> en progreso</span>
+              </div>
+              <div class="legend-row">
+                <span class="legend-dot pending"></span>
+                <span id="legendPendingText" class="legend-text"><strong>2 tareas</strong> por hacer</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stream de Tarjetas de Tareas Estilizadas con Franja de Acento Lateral -->
+        <div class="home-tasks-section">
+          <div class="section-title-row">
+            <h3 class="section-heading">Tareas del Día</h3>
+            <button type="button" id="btnHomeViewAllTasks" class="btn-text-link">Ver tablero</button>
+          </div>
+          <div id="homeTasksList" class="home-cards-stack">
+            <!-- Tarjetas interactivas renderizadas con JS -->
+          </div>
+        </div>
+
+        <!-- Próximos Eventos y Citas del Día (De Mockups e rv .jpeg y WhatsApp d fg) -->
+        <div class="home-events-section">
+          <div class="section-title-row">
+            <h3 class="section-heading">Próximos Eventos</h3>
+            <button type="button" id="btnHomeViewCalendar" class="btn-text-link">Ver calendario</button>
+          </div>
+          <div id="homeUpcomingEventsList" class="home-events-stack">
+            <!-- Tarjetas de eventos renderizadas con JS -->
+          </div>
+        </div>
+      </section>
+
       <!-- VISTA 1: Calendario y Agenda Híbrida -->
-      <section id="viewCalendar" class="view-panel active">
+      <section id="viewCalendar" class="view-panel" role="tabpanel" aria-labelledby="tabViewCalendar">
+        <!-- Entrada Rápida de Texto Inteligente con IA para el Calendario -->
+        <section class="input-card ai-command-capsule" id="inputCardSection">
+          <form id="organizeForm" class="ai-capsule-form">
+            <div class="ai-capsule-input-box">
+              <div class="ai-capsule-badge" aria-hidden="true">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
+                  <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+                </svg>
+              </div>
+              <textarea
+                id="inputText"
+                class="smart-textarea ai-capsule-textarea"
+                rows="2"
+                placeholder="¿Qué deseas planificar u agendar en el calendario? (ej. Mañana a las 4pm dentista y comprar café)"
+                spellcheck="true"
+                aria-label="Texto a organizar con IA"
+              ></textarea>
+            </div>
+            
+            <div class="ai-capsule-bottom-bar">
+              <div class="ai-capsule-left-actions">
+                <button type="button" id="btnToggleExamples" class="ai-capsule-toggle-btn active" aria-expanded="true" title="Alternar sugerencias">
+                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                  <span id="toggleExamplesLabel">Sugerencias</span>
+                </button>
+                <span class="ai-capsule-kbd" aria-hidden="true"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+              </div>
+              <button type="submit" id="btnSubmitText" class="btn btn-primary ai-capsule-submit-btn">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                <span>Agendar con IA</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Chips de ejemplos rápidos -->
+          <div class="example-chips-wrapper">
+            <div class="example-chips" id="exampleChipsContainer">
+              <span class="chips-label">Prueba con:</span>
+              <button class="chip-btn" type="button" data-text="Mañana a las 15:30 reunión de equipo por Zoom y pagar la tarjeta de crédito el viernes">Reunión y pago</button>
+              <button class="chip-btn" type="button" data-text="Comprar leche, huevos y fruta el sábado por la mañana. Prioridad alta">Compras del sábado</button>
+              <button class="chip-btn" type="button" data-text="Entregar borrador del proyecto el 15 de noviembre y revisar correos pendientes">Proyecto y correos</button>
+              <button class="chip-btn" type="button" data-text="Cita médica el martes a las 10:00 y llamar al banco">Médico y banco</button>
+            </div>
+            <div class="chips-scroll-hint" aria-hidden="true" title="Desliza para ver más opciones">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
+          </div>
+        </section>
+
+        <!-- Indicador de Carga -->
+        <div id="loadingIndicator" class="loading-container hidden" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p id="loadingText">Interpretando y clasificando en tareas y calendario con IA…</p>
+        </div>
+
         <div id="calendarMount"></div>
       </section>
 
-      <!-- VISTA 2: Lista de Tareas y Filtros -->
-      <section id="viewTasks" class="view-panel">
-        <div class="tasks-toolbar">
-          <div class="toolbar-primary-row">
-            <!-- Conmutador de modo de vista: Lista vs Kanban -->
-            <div class="tasks-view-mode-toggle" role="group" aria-label="Modo de vista">
-              <button id="btnViewList" class="btn-mode-toggle active" type="button" title="Vista de lista">📋 Lista</button>
-              <button id="btnViewKanban" class="btn-mode-toggle" type="button" title="Vista de tablero Kanban">🗂️ Kanban</button>
+      <!-- VISTA 2: Mis Tareas (Diseño Ergonómico y Compacto) -->
+      <section id="viewTasks" class="view-panel" role="tabpanel" aria-labelledby="tabViewTasks">
+        <div class="tasks-toolbar-refined">
+          <!-- Cabecera Compacta de Tareas -->
+          <div class="tasks-header-row">
+            <div class="tasks-title-group">
+              <h2 class="tasks-main-title">Mis Tareas</h2>
+              <span id="badgeTasksCountRefined" class="tasks-count-chip">0</span>
             </div>
-            <div class="toolbar-actions">
-              <button id="btnQuickAddTask" class="btn btn-sm btn-outline">+ Tarea Manual</button>
-              <button id="btnClearAllTasks" class="btn-link" style="font-size:0.75rem; color:var(--text-muted);">Vaciar</button>
+            <div class="tasks-header-actions">
+              <div class="tasks-view-mode-toggle" role="group" aria-label="Modo de vista">
+                <button id="btnViewList" class="btn-mode-toggle active" type="button" title="Vista de lista">
+                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                  <span>Lista</span>
+                </button>
+                <button id="btnViewKanban" class="btn-mode-toggle" type="button" title="Vista Kanban">
+                  <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></svg>
+                  <span>Kanban</span>
+                </button>
+              </div>
+              <button id="btnQuickAddTask" class="btn-task-create-compact" type="button">
+                <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                <span>Nueva</span>
+              </button>
             </div>
           </div>
 
-          <div class="toolbar-filters-row">
-            <div class="filter-group">
-              <label class="filter-label" for="selectCategoryFilter">Categoría:</label>
-              <select id="selectCategoryFilter" class="filter-select">
-                <option value="all">Todas</option>
-                <option value="Trabajo">💼 Trabajo</option>
-                <option value="Personal">🏠 Personal</option>
-                <option value="Compras">🛒 Compras</option>
-                <option value="Estudio">📚 Estudio</option>
-                <option value="Salud">💊 Salud</option>
-                <option value="General">📌 General</option>
-              </select>
+          <!-- Fila de Filtros Rápidos (Pills) & Categorías -->
+          <div class="tasks-filters-bar">
+            <div class="tasks-fast-pills" role="radiogroup" aria-label="Filtro de tareas">
+              <button type="button" class="task-fast-pill active" data-fast-filter="all">Todas</button>
+              <button type="button" class="task-fast-pill" data-fast-filter="today">Hoy</button>
+              <button type="button" class="task-fast-pill" data-fast-filter="upcoming">Próximas</button>
+              <button type="button" class="task-fast-pill" data-fast-filter="completed">Completadas</button>
             </div>
-            <div class="filter-group" id="filterStatusGroup">
-              <label class="filter-label" for="selectStatusFilter">Estado:</label>
-              <select id="selectStatusFilter" class="filter-select">
-                <option value="pending">⏳ Pendientes</option>
-                <option value="completed">✅ Completadas</option>
-                <option value="all">Todas</option>
+            <div class="tasks-category-filter-wrap">
+              <select id="selectCategoryFilter" class="task-category-select" title="Filtrar por categoría">
+                <option value="all">Todas las categorías</option>
+                <option value="Trabajo">Trabajo</option>
+                <option value="Personal">Personal</option>
+                <option value="Compras">Compras</option>
+                <option value="Estudio">Estudio</option>
+                <option value="Salud">Salud</option>
+                <option value="General">General</option>
               </select>
+              <!-- Hidden compatibility element for selectStatusFilter -->
+              <select id="selectStatusFilter" class="hidden">
+                <option value="all" selected>Todas</option>
+                <option value="pending">Pendientes</option>
+                <option value="completed">Completadas</option>
+              </select>
+              <button id="btnClearAllTasks" class="btn-link-muted" title="Vaciar tareas">Vaciar</button>
             </div>
           </div>
         </div>
@@ -417,7 +744,7 @@
           <div class="kanban-column" data-status="pending">
             <div class="kanban-col-header">
               <div class="kanban-col-title-wrap">
-                <span class="kanban-col-dot pending"></span>
+                <span class="kanban-col-dot pending" aria-hidden="true"></span>
                 <span class="kanban-col-title">Por Hacer</span>
               </div>
               <span class="kanban-col-badge" id="badgeKanbanPending">0</span>
@@ -428,7 +755,7 @@
           <div class="kanban-column" data-status="in_progress">
             <div class="kanban-col-header">
               <div class="kanban-col-title-wrap">
-                <span class="kanban-col-dot in_progress"></span>
+                <span class="kanban-col-dot in_progress" aria-hidden="true"></span>
                 <span class="kanban-col-title">En Curso / Hoy</span>
               </div>
               <span class="kanban-col-badge" id="badgeKanbanInProgress">0</span>
@@ -439,7 +766,7 @@
           <div class="kanban-column" data-status="completed">
             <div class="kanban-col-header">
               <div class="kanban-col-title-wrap">
-                <span class="kanban-col-dot completed"></span>
+                <span class="kanban-col-dot completed" aria-hidden="true"></span>
                 <span class="kanban-col-title">Completadas</span>
               </div>
               <span class="kanban-col-badge" id="badgeKanbanCompleted">0</span>
@@ -449,12 +776,95 @@
         </div>
       </section>
 
-      <!-- VISTA 3: Ideas y Notas Rápidas -->
-      <section id="viewNotes" class="view-panel">
+      <!-- VISTA 3: Asistente Conversacional Inteligente (Rediseño Profesional y Cálido) -->
+      <section id="viewAssistant" class="view-panel" role="tabpanel" aria-labelledby="tabViewAssistant">
+        <div class="assistant-container">
+          <!-- Cabecera Elegante del Asistente -->
+          <div class="assistant-header-refined">
+            <div class="assistant-identity">
+              <div class="assistant-sparkle-avatar" aria-hidden="true">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+              </div>
+              <div class="assistant-meta-text">
+                <h2 class="assistant-title">Asistente IA</h2>
+                <p id="assistantStatusSubtitle" class="assistant-status">Impulsado por IA • Listo para ayudarte</p>
+              </div>
+            </div>
+            <div class="assistant-actions">
+              <button id="btnClearChat" class="assistant-action-btn" title="Nueva conversación" aria-label="Nueva conversación">
+                <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sugerencias Inteligentes Compactas Horizontales -->
+          <div class="chat-suggestions-container" id="chatSuggestionsContainer" aria-label="Sugerencias rápidas">
+            <div class="chat-suggestions-scroll">
+              <button type="button" class="chat-pill-chip" data-prompt="Organizar mi día de hoy con prioridades">
+                <span class="chip-sparkle">✦</span> Organizar mi día
+              </button>
+              <button type="button" class="chat-pill-chip" data-prompt="Crear una reunión mañana a las 15:00 por Google Meet">
+                <span class="chip-sparkle">✦</span> Crear una reunión
+              </button>
+              <button type="button" class="chat-pill-chip" data-prompt="Planificar los objetivos de mi semana">
+                <span class="chip-sparkle">✦</span> Planificar mi semana
+              </button>
+              <button type="button" class="chat-pill-chip" data-prompt="Ver mis tareas pendientes y más urgentes">
+                <span class="chip-sparkle">✦</span> Ver mis pendientes
+              </button>
+            </div>
+          </div>
+
+          <!-- Flujo de Mensajes de Conversación -->
+          <div id="chatMessageStream" class="chat-message-stream" role="log" aria-live="polite">
+            <!-- Mensaje Inicial Conciso y Cálido -->
+            <div class="chat-bubble-row bot-row initial-welcome-row">
+              <div class="bot-avatar-mini" aria-hidden="true">✦</div>
+              <div class="chat-bubble bot-bubble">
+                <p class="bot-welcome-main"><strong>Hola, ¿qué organizamos hoy?</strong></p>
+                <p class="bot-welcome-sub">Puedo ayudarte a planificar eventos, tareas y actividades a partir de texto libre o voz.</p>
+              </div>
+            </div>
+
+            <!-- Indicador de Escritura de la IA -->
+            <div id="chatTypingIndicator" class="chat-typing-indicator hidden" aria-hidden="true">
+              <div class="typing-dots">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <span class="typing-label">Estructurando actividades...</span>
+            </div>
+          </div>
+
+          <!-- Barra Inferior de Entrada Conversacional -->
+          <div class="chat-input-bar">
+            <button type="button" id="btnChatVoiceTrigger" class="chat-bar-icon-btn voice-btn" title="Dictar por voz" aria-label="Dictar por voz">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+            </button>
+            <div class="chat-input-wrapper">
+              <textarea
+                id="chatInputText"
+                class="chat-textarea"
+                rows="1"
+                placeholder="Escribe o dicta cualquier plan o tarea..."
+                aria-label="Mensaje para el Asistente IA"
+              ></textarea>
+            </div>
+            <button type="button" id="btnChatSend" class="chat-send-btn" title="Enviar mensaje" aria-label="Enviar mensaje">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA 4: Ideas y Notas Rápidas -->
+      <section id="viewNotes" class="view-panel" role="tabpanel" aria-labelledby="tabViewNotes">
         <div class="notes-header">
           <h3>Ideas y Resúmenes Sintetizados</h3>
           <div class="notes-actions">
-            <button id="btnQuickAddNote" class="btn btn-sm btn-outline">+ Nueva Idea</button>
+            <button id="btnQuickAddNote" class="btn btn-sm btn-outline">
+              <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Nueva Idea
+            </button>
             <button id="btnClearNotes" class="btn-link">Limpiar todas</button>
           </div>
         </div>
@@ -463,7 +873,7 @@
             type="search"
             id="inputSearchNotes"
             class="styled-input notes-search-input"
-            placeholder="🔍 Buscar en ideas y notas por palabra clave..."
+            placeholder="Buscar en ideas y notas por palabra clave…"
             aria-label="Buscar en ideas y notas"
           />
         </div>
@@ -471,9 +881,12 @@
       </section>
 
       <!-- VISTA 4: Historial de Entradas -->
-      <section id="viewHistory" class="view-panel">
+      <section id="viewHistory" class="view-panel" role="tabpanel" aria-labelledby="tabViewHistory">
         <div class="history-header">
-          <h3>📂 Historial de Entradas Procesadas</h3>
+          <h3>
+            <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+            Historial de Entradas Procesadas
+          </h3>
           <button id="btnClearHistory" class="btn-link">Borrar historial</button>
         </div>
         <div id="historyListElement" class="history-list"></div>
@@ -482,6 +895,6 @@
   </div>
 
   <!-- Scripts modulares ES6 -->
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=3.2"></script>
 </body>
 </html>

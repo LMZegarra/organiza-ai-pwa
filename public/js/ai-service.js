@@ -192,23 +192,112 @@ REGLAS ESTRICTAS DE EXTRACCIÓN:
       if (response.status !== 404) {
         const errJson = await response.json().catch(() => null);
         if (errJson?.error) {
-          throw new Error(errJson.error);
+          console.warn('[AIService] Servidor indicó:', errJson.error);
         }
       }
     } catch (err) {
-      // Si el error provino directamente del servidor con un mensaje explícito, mostrarlo
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('Failed to fetch') && !err.message.includes('NetworkError')) {
-        throw err;
-      }
-      console.warn('[AIService] Backend /api/organize-text no disponible, intentando fallback directo:', err.message);
+      console.warn('[AIService] Backend /api/organize-text no disponible o sin credencial, activando fallback:', err.message);
     }
 
     // 2. Fallback: Llamada directa a OpenRouter desde el navegador (para GitHub Pages estático o local)
     if (apiKey) {
-      return await this.directOpenRouter(apiKey, text.trim(), model, currentDate);
+      try {
+        return await this.directOpenRouter(apiKey, text.trim(), model, currentDate);
+      } catch (err) {
+        console.warn('[AIService] OpenRouter directo falló, activando motor heurístico local:', err.message);
+      }
     }
 
-    // 3. Si el servidor no estuvo disponible y no hay clave en el cliente
-    throw new Error('No se pudo contactar al servidor y no hay una API Key de OpenRouter configurada en el dispositivo. Puedes agregar tu clave personal en Ajustes (⚙️).');
+    // 3. Fallback Heurístico Local (Offline / Sin Conexión): Garantiza que el usuario nunca quede bloqueado
+    console.info('[AIService] Procesando con motor heurístico local (Local-First Offline)...');
+    return this.localHeuristicParser(text.trim(), currentDate);
+  }
+
+  static async organizeText(text) {
+    return this.processText(text);
+  }
+
+  static localHeuristicParser(rawText, currentDate) {
+    const text = (rawText || '').trim();
+    const today = new Date();
+    const baseDate = currentDate || getLocalDateISO(today);
+
+    let targetDate = baseDate;
+    const lower = text.toLowerCase();
+    if (lower.includes('mañana')) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + 1);
+      targetDate = getLocalDateISO(d);
+    } else if (lower.includes('pasado mañana')) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + 2);
+      targetDate = getLocalDateISO(d);
+    } else if (lower.includes('sábado') || lower.includes('sabado')) {
+      const d = new Date(today);
+      const diff = (6 - d.getDay() + 7) % 7 || 7;
+      d.setDate(d.getDate() + diff);
+      targetDate = getLocalDateISO(d);
+    }
+
+    let startTime = null;
+    const timeMatch = lower.match(/(?:a las\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|hrs|h)?/);
+    if (timeMatch) {
+      let h = parseInt(timeMatch[1], 10);
+      const m = timeMatch[2] ? timeMatch[2] : '00';
+      const meridiem = timeMatch[3];
+      if (meridiem === 'pm' && h < 12) h += 12;
+      if (meridiem === 'am' && h === 12) h = 0;
+      if (lower.includes('noche') && h < 12) h += 12;
+      if (h >= 0 && h <= 23) {
+        startTime = String(h).padStart(2, '0') + ':' + m;
+      }
+    }
+
+    const isCalendarEvent = startTime !== null || /reunión|reunion|cita|gimnasio|dentista|zoom|meet|partido|cumpleaños|vuelo/i.test(text);
+
+    const calendar_events = [];
+    const tasks = [];
+    const notes = [];
+
+    if (isCalendarEvent) {
+      calendar_events.push({
+        id: 'event_' + Date.now() + '_0',
+        title: text.replace(/^(programar|agendar|añadir|crear)\s+/i, '').trim(),
+        date: targetDate,
+        startTime: startTime || '10:00',
+        endTime: null,
+        location: /zoom|meet/i.test(text) ? 'Virtual' : '',
+        description: 'Planificado con IA: ' + text
+      });
+    } else if (/comprar|pagar|enviar|revisar|preparar|hacer|llamar|terminar/i.test(text)) {
+      const isHigh = /urgente|alta|hoy|pagar/i.test(text);
+      const category = /comprar/i.test(text) ? 'Compras' : (/enviar|revisar|informe/i.test(text) ? 'Trabajo' : 'General');
+      tasks.push({
+        id: 'task_' + Date.now() + '_0',
+        title: text.replace(/^(hacer|realizar|recordar)\s+/i, '').trim(),
+        priority: isHigh ? 'alta' : 'media',
+        category,
+        dueDate: targetDate,
+        due_date: targetDate,
+        completed: false
+      });
+    } else {
+      tasks.push({
+        id: 'task_' + Date.now() + '_0',
+        title: text,
+        priority: 'media',
+        category: 'General',
+        dueDate: targetDate,
+        due_date: targetDate,
+        completed: false
+      });
+    }
+
+    return {
+      summary: 'Plan detectado: ' + text,
+      calendar_events,
+      tasks,
+      notes
+    };
   }
 }

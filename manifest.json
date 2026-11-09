@@ -4,14 +4,15 @@
   "description": "Escribe lo que tienes en mente y la IA lo organizará automáticamente en tus listas de tareas y calendario con sincronización en la nube",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#f0f9ff",
+  "theme_color": "#0284c7",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon.svg",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
