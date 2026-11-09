@@ -4,7 +4,7 @@
  * y Cache-First para recursos estáticos (offline instantáneo).
  */
 
-const CACHE_NAME = 'organiza-ai-cache-v3.2';
+const CACHE_NAME = 'organiza-ai-cache-v3.3';
 const STATIC_ASSETS = [
   './',
   'index.html',
